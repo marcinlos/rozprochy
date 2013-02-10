@@ -57,10 +57,9 @@ int recv_total(int fd, void* buffer, int size)
         char* dest = buf + total;
         int rest = size - total;
         ssize_t n = recv(fd, dest, rest, 0);
-        printf("After recv: %zd\n", n);
         if (n < 0)
         {
-            perror("Response error");
+            perror("recv error");
             return -1;
         }
         total += n;
@@ -80,7 +79,7 @@ int send_total(int fd, void* buffer, int size)
         ssize_t n = send(fd, src, rest, 0);
         if (n < 0)
         {
-            perror("Sending error");
+            perror("send error");
             return -1;
         }
         total += n;

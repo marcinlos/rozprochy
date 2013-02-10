@@ -14,6 +14,8 @@ uint64_t ntohll(uint64_t netlong);
 int recv_total(int fd, void* buffer, int size);
 
 
+// Repeatedly, if nesessary, calls send to push the whole buffer through
+// the network. In case of an error returns -1.
 int send_total(int fd, void* buffer, int size);
 
 
