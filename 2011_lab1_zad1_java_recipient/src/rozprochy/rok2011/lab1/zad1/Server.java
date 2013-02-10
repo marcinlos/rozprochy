@@ -1,6 +1,5 @@
 package rozprochy.rok2011.lab1.zad1;
 
-import java.io.Closeable;
 import java.io.DataInput;
 import java.io.DataInputStream;
 import java.io.DataOutput;
@@ -12,7 +11,7 @@ import java.net.Socket;
 import java.util.logging.Logger;
 
 
-public class Server implements Closeable {
+public class Server {
     
     static final Logger logger = Logger.getLogger(Server.class.getName());
 
@@ -23,20 +22,35 @@ public class Server implements Closeable {
     private ServerSocket socket;
     
     private Service service;
-
+    
     /**
+     * Factory method creating server from command line arguments.
+     * 
      * @param args command line arguments
      * @param service integral value transformer
      */
-    public Server(String[] args, Service service) {
+    public static Server fromArguments(Service service, String[] args) {
+        int port = DEFAULT_PORT;
         if (args.length > 0) {
-            port = Integer.parseInt(args[0]);
-            logger.info("Port " + port + " choosen");
-        } else {
-            port = DEFAULT_PORT;
-            logger.info("No port specified, " + port + " used");
+            try {
+                port = Integer.parseInt(args[0]);
+            } catch (NumberFormatException e) {
+                printUsage();
+                throw e;
+            }
         }
+        logger.info("Port " + port + " choosen");
+        return new Server(service, port);
+    }
+    
+    private static void printUsage() {
+        System.err.println("Usage: server <port>");
+    }
+
+
+    public Server(Service service, int port) {
         this.service = service;
+        this.port = port;
     }
 
     /**
@@ -122,11 +136,6 @@ public class Server implements Closeable {
             long p = service.process(v);
             output.writeLong(p);
         }
-    }
-
-    @Override
-    public void close() throws IOException {
-        socket.close();
     }
 
 }

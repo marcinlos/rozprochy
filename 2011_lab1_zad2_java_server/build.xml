@@ -1,0 +1,48 @@
+<project default="rebuild">
+
+	<property name="classes" value="bin" />
+	<property name="dist" value="dist" />
+	<property name="result" value="server" />
+	<property name="doc" value="doc" />
+	<property name="src" value="src" />
+	<property name="main" value="rozprochy.rok2011.lab1.zad2.Main" />
+	<property name="jdk_version" value="1.6" />
+
+	<target name="clean">
+		<delete dir="${classes}" />
+		<delete dir="${dist}" />
+		<delete dir="${doc}" />
+	</target>
+
+	<target name="doc">
+		<mkdir dir="${doc}" />
+		<javadoc sourcepath="${src}" destdir="${doc}">
+			<fileset dir="${src}" includes="**/*.java" />
+		</javadoc>
+	</target>
+
+	<target name="compile">
+		<mkdir dir="${classes}" />
+		<javac srcdir="${src}" 
+			destdir="${classes}" 
+        	includeantruntime="false"
+			source="${jdk_version}"
+			target="${jdk_version}" />
+	</target>
+
+	<target name="jar" depends="compile">
+		<mkdir dir="${dist}" />
+		<jar destfile="${dist}/${result}.jar" basedir="${classes}">
+			<manifest>
+				<attribute name="Main-Class" value="${main}" />
+			</manifest>
+		</jar>
+	</target>
+
+	<target name="run" depends="jar,compile">
+		<java jar="${dist}/${result}.jar" fork="true" />
+	</target>
+
+	<target name="rebuild" depends="clean,run" />
+
+</project>

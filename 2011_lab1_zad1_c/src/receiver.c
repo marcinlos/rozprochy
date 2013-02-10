@@ -2,16 +2,29 @@
 #include <string.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <signal.h>
+#include <errno.h>
 #include <arpa/inet.h>
 #include "net.h"
 #include "service.h"
 
-
+// Server socket's queue size
 #define BACKLOG 5
 
+// Maximal expected size of a textual represetation of TCP/IP address (ip:port)
 #define MAX_ADDR_SIZE 64
 
+// Synchronization variable
+static volatile sig_atomic_t stop_execution = 0;
 
+// Interrupt handler
+static void handle_interrupt(int signo)
+{
+    stop_execution = 1;
+}
+
+
+// Prints usage instructions and exit with error code
 static void arguments_error(void)
 {
     fprintf(stderr, "Usage: receiver <port>\n");
@@ -71,7 +84,7 @@ static int create_server_socket(int port)
     return fd;
 }
 
-
+// Writes a textual representation of passed address to buffer
 static void format_address(char* buffer, struct sockaddr_in* address)
 {
     int port = address->sin_port;
@@ -86,6 +99,7 @@ static void format_address(char* buffer, struct sockaddr_in* address)
     }
 }
 
+// Displays a message about accepted connection
 static void log_connection(struct sockaddr_in* address)
 {
     char addr_buffer[MAX_ADDR_SIZE];
@@ -94,6 +108,7 @@ static void log_connection(struct sockaddr_in* address)
 }
 
 
+// Performs some action and talks back to client
 static void serve_client(int fd)
 {
     char buffer[8];
@@ -137,32 +152,51 @@ static void serve_client(int fd)
 }
 
 
+// Loop continuously accepting and serving client connections
 static void accept_loop(int fd)
 {
     struct sockaddr_in cl_addr;
     socklen_t len;
 
-    for (;"ever";)
+    while (! stop_execution)
     {
         int client_fd = accept(fd, (struct sockaddr*) &cl_addr, &len);
         if (client_fd < 0)
         {
-            perror("accept() has failed");
-            exit(-1);
+            if (errno != EINTR)
+            {
+                perror("accept() has failed");
+                exit(-1);
+            }
         }
-        log_connection(&cl_addr);
-        serve_client(client_fd);
-        close_socket(client_fd);
+        else
+        {
+            log_connection(&cl_addr);
+            serve_client(client_fd);
+            close_socket(client_fd);
+        }
     }
+    printf("Shutting down...\n");
+}
+
+
+static void setup_interrupts(void)
+{
+    struct sigaction sa;
+    sa.sa_handler = &handle_interrupt;
+    sigemptyset(&sa.sa_mask);
+    sigaction(SIGINT, &sa, NULL);
 }
 
 
 int main(int argc, char* argv[])
 {
+    setup_interrupts();
     int port = choose_port(argc, argv);
     int fd = create_server_socket(port);
     accept_loop(fd);
     close_socket(fd);
+    printf("Done\n");
     return 0;
 }
 
