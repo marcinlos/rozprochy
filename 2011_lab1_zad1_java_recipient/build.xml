@@ -6,6 +6,7 @@
 	<property name="doc" value="doc" />
 	<property name="src" value="src" />
 	<property name="main" value="rozprochy.rok2011.lab1.zad1.Main" />
+	<property name="jdk_version" value="1.6" />
 
 	<target name="clean">
 		<delete dir="${classes}" />
@@ -22,8 +23,11 @@
 
 	<target name="compile">
 		<mkdir dir="${classes}" />
-		<javac srcdir="${src}" destdir="${classes}" 
-        	includeantruntime="false" />
+		<javac srcdir="${src}" 
+			destdir="${classes}" 
+        	includeantruntime="false"
+			source="${jdk_version}"
+			target="${jdk_version}" />
 	</target>
 
 	<target name="jar" depends="compile">

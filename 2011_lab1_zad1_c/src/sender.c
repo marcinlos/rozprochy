@@ -19,7 +19,7 @@ in_addr_t address;
 // Prints usage instruction and exits with error code
 static void arguments_error(void)
 {
-    fprintf(stderr, "Usage: <address> <port>\n");
+    fprintf(stderr, "Usage: <port> <address> \n");
     exit(-1);
 }
 
@@ -82,11 +82,13 @@ static int create_socket(in_addr_t address, int port)
     sv_addr.sin_addr.s_addr = address;
     sv_addr.sin_port = htons(port);
 
+    printf("Connecting...\n");
     if (connect(fd, (struct sockaddr*) &sv_addr, sizeof(sv_addr)) < 0)
     {
         perror("connect() has failed");
         exit(-1);
     }
+    printf("Connected\n");
     return fd;
 }
 
