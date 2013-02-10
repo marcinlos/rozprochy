@@ -13,9 +13,10 @@ vpath %.c ${srcdir}
 #    foo_SRCS = fooer.c error_msg.c
 #    all_LDFLAGS = -pthread
 
-PROGRAMS = sender
+PROGRAMS = sender receiver
 
 sender_SRCS = net.c sender.c
+receiver_SRCS = net.c receiver.c service.c
 
 all_LDFLAGS =
 

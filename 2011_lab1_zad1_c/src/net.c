@@ -1,6 +1,8 @@
 #include <string.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
+#include <unistd.h>
 #include <netinet/in.h>
 
 
@@ -85,4 +87,14 @@ int send_total(int fd, void* buffer, int size)
         total += n;
     }
     return 0;
+}
+
+
+void close_socket(int fd)
+{
+    if (close(fd) < 0)
+    {
+        perror("close() has failed");
+        exit(-1);
+    }
 }

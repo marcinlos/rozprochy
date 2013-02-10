@@ -8,9 +8,6 @@
 #include "net.h"
 
 
-// Value used when the port is not specified
-#define DEFAULT_PORT 5000
-
 #define MAX_LINE 256
 
 // Connection parameters - global to avoid threading them through
@@ -18,22 +15,21 @@
 int port;
 in_addr_t address;
 
-ssize_t a;
 
 // Prints usage instruction and exits with error code
-void arguments_error(void)
+static void arguments_error(void)
 {
     fprintf(stderr, "Usage: <address> <port>\n");
     exit(-1);
 }
 
 
-int choose_port(int argc, char* argv[])
+static int choose_port(int argc, char* argv[])
 {
     int port = DEFAULT_PORT;
     if (argc > 1)
     {
-        if (sscanf("%d", argv[1], &port) != 1)
+        if (sscanf(argv[1], "%d", &port) != 1)
         {
             fprintf(stderr, "Invalid port number: `%s'\n", argv[1]);
             arguments_error();
@@ -47,7 +43,7 @@ int choose_port(int argc, char* argv[])
 }
 
 
-in_addr_t choose_address(int argc, char* argv[])
+static in_addr_t choose_address(int argc, char* argv[])
 {
     const char* address = "127.0.0.1";;
     if (argc > 2)
@@ -70,7 +66,7 @@ in_addr_t choose_address(int argc, char* argv[])
 
 
 // Establishes a connection to given address:port endpoint
-int create_socket(in_addr_t address, int port)
+static int create_socket(in_addr_t address, int port)
 {
     int fd = socket(AF_INET, SOCK_STREAM, 0);
     if (fd < 0)
@@ -92,17 +88,6 @@ int create_socket(in_addr_t address, int port)
         exit(-1);
     }
     return fd;
-}
-
-
-// Closes the connection, "taking care" of possible errors
-void close_socket(int fd)
-{
-    if (close(fd) < 0)
-    {
-        perror("close() has failed");
-        exit(-1);
-    }
 }
 
 
