@@ -6,6 +6,8 @@ package rozprochy.rok2011.lab1.zad3;
  */
 public interface ChatClient {
     
+    void setConnection(Connection connection);
+    
     void gotDatagram(ChatDatagram data); 
 
 }

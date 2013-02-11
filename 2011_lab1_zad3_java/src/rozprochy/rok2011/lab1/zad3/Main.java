@@ -16,16 +16,18 @@ public class Main {
             Connection connection = null;
             String ip = args[0];
             String login = args[2];
+            CLIChatClient client = new CLIChatClient(login);
             try {
                 int port = Integer.parseInt(args[1]);
                 InetAddress group = InetAddress.getByName(ip);
-                connection = new UDPConnection(group, port);
+                connection = new UDPConnection(client, group, port);
+                client.setConnection(connection);
             } catch (Exception e) {
                 System.err.println(e.getMessage());
                 printUsage();
                 return;
             }
-            CLIChatClient client = new CLIChatClient(connection, login);
+            
             try {
                 client.inputLoop();
             } catch (Exception e) {

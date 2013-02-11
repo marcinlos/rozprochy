@@ -11,8 +11,7 @@ public class CLIChatClient implements ChatClient {
     private String login;
     
     
-    public CLIChatClient(Connection connection, String login) {
-        this.connection = connection;
+    public CLIChatClient(String login) {
         this.login = login;
     }
 
@@ -33,6 +32,8 @@ public class CLIChatClient implements ChatClient {
      */
     public void inputLoop() {
         try {
+            connection.run();
+            
             BufferedReader stdin = new BufferedReader(
                     new InputStreamReader(System.in));
             
@@ -46,6 +47,12 @@ public class CLIChatClient implements ChatClient {
             e.printStackTrace(System.err);
         }
         
+    }
+
+
+    @Override
+    public void setConnection(Connection connection) {
+        this.connection = connection;
     }
     
 }

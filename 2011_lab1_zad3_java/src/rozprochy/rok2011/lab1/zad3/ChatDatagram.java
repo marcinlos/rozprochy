@@ -58,12 +58,12 @@ public class ChatDatagram {
     }
     
     
-    public static ChatDatagram unmarshall(byte[] bytes) {
-        ByteBuffer buffer = ByteBuffer.wrap(bytes);
+    public static ChatDatagram unmarshall(byte[] bytes, int offset, int length) {
+        ByteBuffer buffer = ByteBuffer.wrap(bytes, offset, length);
         
         // Read it as an unsigned value
         int lenUser = buffer.getShort() & 0xffff;
-        int lenMessage = bytes.length - lenUser - 4;
+        int lenMessage = length - lenUser - 4;
         
         byte[] utfUser = new byte[lenUser];
         byte[] utfMessage = new byte[lenMessage];
