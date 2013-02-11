@@ -2,7 +2,6 @@ package rozprochy.rok2011.lab1.zad2;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.logging.Logger;
@@ -54,16 +53,6 @@ public class Server {
         this.directory = directory;
     }
     
-    /*
-     * Utility method formatting socket's remote endpoint's address as ip:port
-     */
-    private static String formatAddress(Socket client) {
-        InetAddress remote = client.getInetAddress();
-        String ip = remote.getHostAddress();
-        int port = client.getPort();
-        return String.format("%s:%d", ip, port);
-    }
-    
     /**
      * Main loop, accepting connections and spawning threads to server
      * clients. 
@@ -90,7 +79,7 @@ public class Server {
      * Creates another thread to serve client represented by the passed socket
      */
     private void handleConnection(Socket client) {
-        String address = formatAddress(client);
+        String address = Utils.formatAddress(client);
         logger.info("Accepted connection from " + address);
         ClientHandler handler = new ClientHandler(client, directory);
         Thread worker = new Thread(handler);

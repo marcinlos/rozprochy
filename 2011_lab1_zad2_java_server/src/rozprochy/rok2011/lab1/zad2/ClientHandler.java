@@ -2,6 +2,7 @@ package rozprochy.rok2011.lab1.zad2;
 
 import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
+import java.io.EOFException;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -23,6 +24,7 @@ class ClientHandler implements Runnable {
 
     private Socket client;
     private File directory;
+    private File localFile;
     
     /** Amount of bytes that remain to be read */
     private int remaining;
@@ -33,10 +35,14 @@ class ClientHandler implements Runnable {
     /** Output (file) stream */
     private OutputStream output;
     
+    /** Textual representation of client's endpoint */
+    private String endpoint;
+    
     
     public ClientHandler(Socket client, File directory) {
         this.client = client;
         this.directory = directory;
+        endpoint = Utils.formatAddress(client);
     }
     
     
@@ -44,16 +50,29 @@ class ClientHandler implements Runnable {
     public void run() {
         try {
             doWork();
+        } catch (EOFException e) {
+            logger.severe("At " + endpoint + ": Unexpected end of connection");
         } catch (IOException e) {
-            logger.severe("Error: " + e.getMessage());
+            logger.severe("At " + endpoint + ": Error: " + e.getMessage());
             e.printStackTrace(System.err);
         } finally {
             try { 
                 client.close();
             }
             catch (IOException e) {
-                logger.severe("Error while closing: " + e.getMessage());
+                logger.severe("At " + endpoint + ": Error while closing: " + 
+                        e.getMessage());
                 e.printStackTrace(System.err);
+            }
+        }
+    }
+    
+    
+    private void deleteFile() {
+        if (localFile != null) {
+            if (!localFile.delete()) {
+                logger.severe("At " + endpoint + ": Cannot delete local " + 
+                        "file after failure");
             }
         }
     }
@@ -64,12 +83,20 @@ class ClientHandler implements Runnable {
      * {@link #run()} to separate it from exception handling details
      */
     private void doWork() throws IOException {
-         output = null;
+        output = null;
         try {
             input = new DataInputStream(client.getInputStream());
             output = makeFile();
             remaining = readFileSize();
             receiveFile();
+        } catch (IOException e) {
+            // cleanup & rethrow
+            deleteFile();
+            throw e;
+        } catch ( RuntimeException e) {
+            // cleanup & rethrow
+            deleteFile();
+            throw e;
         } finally {
             try { output.close(); }
             catch (IOException e) { /* fix it, maybe? */ }
@@ -112,9 +139,9 @@ class ClientHandler implements Runnable {
      * @return output file stream 
      */
     private OutputStream makeFile() throws IOException {
-        File path = createFileName();
+        localFile = createFileName();
         return new BufferedOutputStream(
-                new FileOutputStream(path));
+                new FileOutputStream(localFile));
     }
     
     /**
