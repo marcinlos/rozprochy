@@ -41,7 +41,6 @@ static int choose_port(int argc, char* argv[])
         if ((d = sscanf(argv[1], "%d", &port)) != 1)
         {
             fprintf(stderr, "Invalid port number: `%s'\n", argv[1]);
-            fprintf(stderr, "Kurwa, no %d\n", d);
             arguments_error();
         }
     }

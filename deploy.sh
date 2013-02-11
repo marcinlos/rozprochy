@@ -4,7 +4,9 @@ declare -A remotes
 remotes[student]=student.agh.edu.pl
 remotes[jagular]=jagular.iisg.agh.edu.pl
 
-path="~/rozprochy/"
+cmd_file=".dupaa"
+
+path='~/rozprochy'
 
 
 # Functions performing various operations on the projects
@@ -68,8 +70,24 @@ done
 
 
 if [[ "$op" == "deploy" ]]; then
+
+    touch "${cmd_file}"
+    echo "cd ${path}" >> "${cmd_file}"
+
+    for dir in ${dirs[*]}; do
+        if [[ "${dir}" =~ "_java" ]]; then
+            echo "meeeh"
+            #echo "ant -f ${dir}/build.xml" >> "${cmd_file}"    
+        elif [[ "${dir}" =~ "_c" ]]; then
+            echo "make -C ${dir}" >> "${cmd_file}"
+        fi
+    done
+
     for remote in "${!remotes[@]}"; do
         echo "${remote}:"
         scp -r "${dirs[@]}" "${remotes[${remote}]}:${path}"
+        ssh  "${remotes[${remote}]}" 'bash -s' < "${cmd_file}"
     done
+
+    rm "${cmd_file}"
 fi
