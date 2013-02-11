@@ -242,7 +242,7 @@ void input_loop(void)
 
 int main(int argc, char* argv[])
 {
-    // Determin connection parameters
+    // Determine connection parameters
     port = choose_port(argc, argv);
     address = choose_address(argc, argv);
 
