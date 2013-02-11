@@ -24,6 +24,7 @@ public class Main {
                 client.setConnection(connection);
             } catch (Exception e) {
                 System.err.println(e.getMessage());
+                e.printStackTrace(System.err);
                 printUsage();
                 return;
             }
@@ -32,6 +33,7 @@ public class Main {
                 client.inputLoop();
             } catch (Exception e) {
                 System.err.println("Error: " + e.getMessage());
+                e.printStackTrace(System.err);
             }
         }
         

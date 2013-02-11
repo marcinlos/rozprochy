@@ -8,4 +8,6 @@ public interface Connection {
 
     void send(ChatDatagram data) throws IOException;
     
+    void close();
+    
 }

@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
+import java.net.SocketException;
 
 public class UDPConnection implements Connection {
     
@@ -13,6 +14,8 @@ public class UDPConnection implements Connection {
     private MulticastSocket socket;
     private InetAddress address;
     private int port;
+    
+    private volatile boolean closed = false;
 
     
     public UDPConnection(ChatClient client, InetAddress address, int port) 
@@ -44,6 +47,9 @@ public class UDPConnection implements Connection {
     private void createSocket() throws IOException {
         try {
             socket = new MulticastSocket(port);
+            // Not realy sure about this, seems to be a good idea
+            socket.setReuseAddress(true);
+
             socket.joinGroup(address);
             
             // GOTCHA: the argument means whether or not to DISABLE
@@ -55,8 +61,6 @@ public class UDPConnection implements Connection {
                 System.err.println("Warning: couldn't set loopback mode, " + 
                         "application will not work locally\n");
             }
-            // Not realy sure about this, seems to be a good idea
-            socket.setReuseAddress(true);
         } catch (IOException e) {
             throw new IOException("Failed to create a multicast socket", e);
         }
@@ -86,6 +90,11 @@ public class UDPConnection implements Connection {
                 while (true) {
                     receiveDatagram();
                 }
+            } catch (SocketException e) {
+                if (! closed) {
+                    System.err.println(e.getMessage());
+                    e.printStackTrace(System.err);
+                }
             } catch (IOException e) {
                 System.err.println(e.getMessage());
                 e.printStackTrace(System.err);
@@ -100,6 +109,12 @@ public class UDPConnection implements Connection {
             client.gotDatagram(data);
         }
         
+    }
+
+    @Override
+    public void close() {
+        socket.close();
+        closed = true;
     }
 
 }

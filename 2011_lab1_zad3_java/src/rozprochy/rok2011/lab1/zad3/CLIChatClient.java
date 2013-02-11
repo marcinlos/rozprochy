@@ -42,6 +42,7 @@ public class CLIChatClient implements ChatClient {
                 ChatDatagram data = new ChatDatagram(login, line);
                 connection.send(data);
             }
+            connection.close();
         } catch (IOException e) {
             System.err.println("Error: " + e.getMessage());
             e.printStackTrace(System.err);
