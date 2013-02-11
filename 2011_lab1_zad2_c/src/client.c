@@ -184,11 +184,44 @@ static int send_total(int fd, void* buffer, int size)
 }
 
 
+static ssize_t send_next_chunk(int fd, int sd)
+{
+    char buffer[BUFFER_SIZE];
+    ssize_t count = read(fd, buffer, sizeof(buffer));
+    if (count < 0)
+    {
+        perror("read() error");
+        exit(-1);
+    }
+    send_total(sd, buffer, count);
+    return count;
+}
+
+
 // Sends file (fd) through the socket (sd)
 static void send_file(int fd, int sd)
 {
     uint32_t size = file_size(fd);
     log_start(size);
+    // Send size
+    uint32_t net_size = htonl(size);
+    send_total(sd, &net_size, sizeof(net_size));
+
+    uint32_t sent = 0;
+
+    // Send data
+    while (sent < size)
+    {
+        ssize_t n = send_next_chunk(fd, sd);
+        if (n == 0)
+        {
+            fprintf(stderr, "EOF was reached before expected number "
+                    "of bytes has been read\n");
+            fprintf(stderr, "%u of %u bytes sent\n", sent, size);
+            exit(-1);
+        }
+        sent += n;
+    }
 }
 
 
