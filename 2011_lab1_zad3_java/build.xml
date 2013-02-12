@@ -43,6 +43,6 @@
 		<java jar="${dist}/${result}.jar" fork="true" />
 	</target>
 
-	<target name="rebuild" depends="clean,run" />
+	<target name="rebuild" depends="clean,jar" />
 
 </project>
