@@ -69,7 +69,7 @@ public class TaskInfo {
      * Invoked after the task finishes
      */
     public void finished(boolean succeeded) {
-        if (isRunning()) {
+        if (! isRunning()) {
             throw new IllegalStateException("Task has already finished once");
         }
         this.succeeded = succeeded;

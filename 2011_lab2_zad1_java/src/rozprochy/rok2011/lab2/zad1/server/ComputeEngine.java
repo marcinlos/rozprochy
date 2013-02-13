@@ -7,6 +7,7 @@ import java.rmi.server.RemoteServer;
 import java.rmi.server.ServerNotActiveException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
 
@@ -18,7 +19,7 @@ import rozprochy.rok2011.lab2.zad1.common.TaskInfo;
 
 public class ComputeEngine implements Compute {
     
-    private final PrintStream log = RemoteServer.getLog();
+    private final PrintStream log = System.err;
     
     private final static int HIST_SIZE = 10;
     
@@ -84,7 +85,14 @@ public class ComputeEngine implements Compute {
      */
     @Override
     public List<TaskInfo> recentTasks(int n) {
-        // TODO Auto-generated method stub
+        List<TaskInfo> tasks = new ArrayList<TaskInfo>();
+        for (TaskInfo task : history) {
+            if (n -- > 0) {
+                tasks.add(task);
+            } else {
+                break;
+            }
+        }
         return null;
     }
 

@@ -3,7 +3,9 @@ if (( $# < 1 )); then
     exit -1
 fi
 
+basedir=$(dirname $(readlink -f $0))
 dest=$(readlink -f $1)
+
 
 if (( $# >= 2 )); then
     prefix=$2
@@ -13,28 +15,29 @@ fi
 
 echo "Copying ordinary classes to ${dest}"
 
-for jar in $(ls ../dist | grep -v _rmi); do
+for jar in $(ls ${basedir}/../dist | grep -v _rmi); do
     echo "  copying ${jar} to ${dest}/${jar}"
-    cp "../dist/${jar}" "${dest}/${jar}"
+    cp "${basedir}/../dist/${jar}" "${dest}/${jar}"
 done
 
 echo "Copying exported classes to codebase at ${prefix}"
-for rmi in $(ls ../dist | grep _rmi); do
+for rmi in $(ls ${basedir}/../dist | grep _rmi); do
     echo "  copying ${rmi} to ${prefix}/${rmi}"
-    cp "../dist/${rmi}" "${prefix}/${rmi}"
+    cp "${basedir}/../dist/${rmi}" "${prefix}/${rmi}"
 done
 
 echo "Transforming run scripts..."
 escaped=$(echo "${dest}" | sed 's/\//\\\//g')
 
-for prog in *.policy; do
-    echo "  ${prog}"
-    cp "${prog}" "${dest}/${prog}"
-    sed "s/@PATH@/${escaped}/" "${prog}" > "${dest}/${prog}"
+for prog in ${basedir}/*.policy; do
+    file=$(basename ${prog})
+    echo "  ${file}"
+    cp "${prog}" "${dest}/${file}"
+    sed "s/@PATH@/${escaped}/" "${prog}" > "${dest}/${file}"
 done
 
 for s in "defs.sh" "client.sh" "server.sh"; do
-    cp "${s}" "${dest}/${s}"
+    cp "${basedir}/${s}" "${dest}/${s}"
 done
 
 echo "Done"
