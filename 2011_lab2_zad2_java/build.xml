@@ -2,7 +2,7 @@
 	
 	<property name="exported" value="rmi" />
 	
-	<property name="pkg" value="rozprochy.rok2011.lab2.zad1" />
+	<property name="pkg" value="rozprochy.rok2011.lab2.zad2" />
 	<property name="pkg.common" value="${pkg}.common" />
 	<property name="pkg.server" value="${pkg}.server" />
 	<property name="pkg.client" value="${pkg}.client" />
@@ -13,8 +13,8 @@
 	<property name="jar.server" value="server" />
 	<property name="jar.client" value="client" />
 	
-	<property name="main.server" value="${pkg.server}.ComputeEngine" />
-	<property name="main.client" value="${pkg.client}.Client" />
+	<property name="main.server" value="${pkg.server}.ServerMain" />
+	<property name="main.client" value="${pkg.client}.ClientMain" />
 	
 	<property name="src" value="src" />
 	<property name="jdk_version" value="1.6" />
