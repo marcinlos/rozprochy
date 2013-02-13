@@ -16,7 +16,6 @@ import rozprochy.rok2011.lab2.zad1.common.Task;
 import rozprochy.rok2011.lab2.zad1.common.TaskInfo;
 
 
-
 public class ComputeEngine implements Compute {
     
     private final PrintStream log = System.err;
@@ -57,7 +56,8 @@ public class ComputeEngine implements Compute {
 
     public <T> T executeTask(Task<T> t) {
         String client = getClientHost();
-        TaskInfo info = new TaskInfo(client, t.getClass().getName());
+        String clazz = t.getClass().getName();
+        TaskInfo info = new TaskInfo(client, clazz, t.toString());
         addToHistory(info);
         boolean success = true;
         try {
@@ -86,14 +86,17 @@ public class ComputeEngine implements Compute {
     @Override
     public List<TaskInfo> recentTasks(int n) {
         List<TaskInfo> tasks = new ArrayList<TaskInfo>();
-        for (TaskInfo task : history) {
-            if (n -- > 0) {
-                tasks.add(task);
-            } else {
-                break;
+        synchronized (history) {
+            log.println("Size of history: " + history.size());
+            for (TaskInfo task : history) {
+                if (n -- > 0) {
+                    tasks.add(task);
+                } else {
+                    break;
+                }
             }
         }
-        return null;
+        return tasks;
     }
 
     
@@ -101,12 +104,14 @@ public class ComputeEngine implements Compute {
     public TaskInfo longestRunning() {
         TaskInfo longest = null;
         long time = 0;
-        for (TaskInfo info : history) {
-            if (info.hasSucceeded()) {
-                long t = info.getRunningTime();
-                if (t > time) {
-                    time = t;
-                    longest = info;
+        synchronized (history) {
+            for (TaskInfo info : history) {
+                if (info.hasSucceeded()) {
+                    long t = info.getRunningTime();
+                    if (t > time) {
+                        time = t;
+                        longest = info;
+                    }
                 }
             }
         }

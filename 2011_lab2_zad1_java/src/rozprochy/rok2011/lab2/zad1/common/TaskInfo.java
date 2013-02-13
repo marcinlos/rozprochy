@@ -1,16 +1,21 @@
 package rozprochy.rok2011.lab2.zad1.common;
 
+import java.io.Serializable;
+
 /**
  * Class representing information about origin and state of some
  * task
  */
-public class TaskInfo {
+public class TaskInfo implements Serializable {
     
     /** Address of a client who requested a call */
     private String clientHost;
     
     /** Name of a task's class */
     private String taskClassName;
+    
+    /** Short task description, as returned by task's {@code toString} */
+    private String description;
     
     /** Whether or not the invoked method is still being executed */
     private boolean running;
@@ -26,9 +31,10 @@ public class TaskInfo {
     private long execEnd;
     
     
-    public TaskInfo(String client, String className) {
+    public TaskInfo(String client, String className, String description) {
         this.clientHost = client;
         this.taskClassName = className;
+        this.description = description;
         this.running = true;
         this.succeeded = false;
         this.execBegin = System.nanoTime();
@@ -52,6 +58,11 @@ public class TaskInfo {
 
     public void setTaskClassName(String taskClassName) {
         this.taskClassName = taskClassName;
+    }
+    
+    
+    public String getDescription() {
+        return description;
     }
 
 
@@ -96,6 +107,29 @@ public class TaskInfo {
             throw new IllegalStateException("Task is still running");
         } 
         return execEnd - execBegin;
+    }
+    
+    
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Host: ").append(getClientHost()).append('\n')
+        .append("Class: ").append(getTaskClassName()).append('\n')
+        .append("Task: ").append(description).append('\n')
+        .append("State: ");
+        if (isRunning()) {
+            sb.append("running");
+        } else if (hasSucceeded()) {
+            sb.append("done");
+        } else {
+            String msg = getException().getMessage();
+            sb.append("failed (").append(msg).append(')');
+        }
+        sb.append('\n');
+        if (! isRunning()) {
+            sb.append("Time: ").append(getRunningTime() / 1e6).append("ms");
+        }
+        return sb.toString();
     }
 
 }

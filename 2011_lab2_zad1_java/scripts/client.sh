@@ -1,7 +1,7 @@
 #!/bin/bash
 
 name=client
-class=ComputePi
+class=Client
 
 if [[ ! $code ]]; then
     echo "Code server is not set, using localhost"

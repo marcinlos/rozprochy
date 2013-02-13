@@ -81,4 +81,9 @@ public class Pi implements Task<BigDecimal>, Serializable {
         } while (term.compareTo(BigDecimal.ZERO) != 0);
         return result;
     }
+    
+    @Override
+    public String toString() {
+        return "Calculate " + digits + " decimal digits of pi";
+    }
 }
