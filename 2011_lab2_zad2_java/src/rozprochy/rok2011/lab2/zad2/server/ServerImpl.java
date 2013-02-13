@@ -12,6 +12,9 @@ import rozprochy.rok2011.lab2.zad2.common.Publisher;
 import rozprochy.rok2011.lab2.zad2.common.Server;
 import rozprochy.rok2011.lab2.zad2.common.Subscriber;
 
+/**
+ * Implementation of a {@link Server} interface.
+ */
 public class ServerImpl implements Server {
     
     private static final Logger logger = Logger.getLogger("Server");
@@ -40,6 +43,7 @@ public class ServerImpl implements Server {
         return pub;
     }
     
+    
     private void logSubscriber(Subscriber subscriber, Iterable<String> topics) {
         StringBuilder sb = new StringBuilder("New subscriber: ");
         for (String topic : topics) {
@@ -65,6 +69,9 @@ public class ServerImpl implements Server {
     }
     
     
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public synchronized Collection<Publisher> registerSubscriber(
             Subscriber subscriber, Collection<String> topics) 
@@ -74,14 +81,23 @@ public class ServerImpl implements Server {
         return findPublishers(topics);
     }
 
+    
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public void unregisterSubscriber(Subscriber subscriber)
+    public synchronized
+    void unregisterSubscriber(Subscriber subscriber)
             throws RemoteException {
-        // TODO Auto-generated method stub
-
+        for (List<Subscriber> onTopic : subscribers.values()) {
+            onTopic.remove(subscriber);
+        }
     }
 
     
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public synchronized void registerPublisher(Publisher publisher, String topic)
             throws RemoteException {
@@ -103,6 +119,7 @@ public class ServerImpl implements Server {
         }
     }
     
+    
     /**
      * Adds publisher to internal map
      */
@@ -116,10 +133,18 @@ public class ServerImpl implements Server {
     }
 
     
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public void unregisterPublisher(Publisher publisher) throws RemoteException {
-        // TODO Auto-generated method stub
-
+    public synchronized 
+    void unregisterPublisher(Publisher publisher) throws RemoteException {
+        logger.info("Publisher unregistered");
+        for (List<Publisher> onTopic : publishers.values()) {
+            if (onTopic.remove(publisher)) {
+                break;
+            }
+        }
     }
 
 }
