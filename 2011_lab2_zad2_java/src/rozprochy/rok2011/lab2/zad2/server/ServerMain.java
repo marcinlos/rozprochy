@@ -29,8 +29,10 @@ public class ServerMain {
             // (mysterious "Cannot find class ServerImpl_Stub")
             Server stub = (Server) UnicastRemoteObject.exportObject(server, 0);
             Naming.rebind(fullName, stub);
+            
             //Registry registry = LocateRegistry.getRegistry();
             //registry.rebind(Server.NAME, stub);
+            
         } catch (RemoteException e) {
             System.err.println("Server error: " + e.getMessage());
             e.printStackTrace(System.err);

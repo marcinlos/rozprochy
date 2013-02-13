@@ -16,10 +16,11 @@ public class ServerImpl implements Server {
     
     private static final Logger logger = Logger.getLogger("Server");
     
-
+    /** Mapping Topic -> Publishers */
     private Map<String, List<Publisher>> publishers = 
             new HashMap<String, List<Publisher>>();
 
+    /** Mapping Topic -> Subscribers */
     private Map<String, List<Subscriber>> subscribers = 
             new HashMap<String, List<Subscriber>>();
 
@@ -53,7 +54,6 @@ public class ServerImpl implements Server {
      * in {@code topics}
      */
     private void addSubscriber(Subscriber subscriber, Iterable<String> topics) {
-        logSubscriber(subscriber, topics);
         for (String topic : topics) {
             List<Subscriber> list = subscribers.get(topic);
             if (list == null) {
@@ -69,7 +69,7 @@ public class ServerImpl implements Server {
     public synchronized Collection<Publisher> registerSubscriber(
             Subscriber subscriber, Collection<String> topics) 
             throws RemoteException {
-    
+        logSubscriber(subscriber, topics);
         addSubscriber(subscriber, topics);
         return findPublishers(topics);
     }
@@ -85,7 +85,28 @@ public class ServerImpl implements Server {
     @Override
     public synchronized void registerPublisher(Publisher publisher, String topic)
             throws RemoteException {
+        
         logger.info("New publisher: " + topic);
+        addPublisher(publisher, topic);
+        
+        // Inform clients interested in this topic
+        Iterable<Subscriber> interested = subscribers.get(topic);
+        if (interested != null) {
+            for (Subscriber subscriber : interested) {
+                try {
+                    subscriber.newPublisher(publisher);
+                } catch (RemoteException e) {
+                    System.err.println("Error while informing subscriber " + 
+                            "about new publisher: " + e.getMessage());
+                }
+            }
+        }
+    }
+    
+    /**
+     * Adds publisher to internal map
+     */
+    private void addPublisher(Publisher publisher, String topic) {
         List<Publisher> onTopic = publishers.get(topic);
         if (onTopic == null) {
             onTopic = new ArrayList<Publisher>();

@@ -23,4 +23,12 @@ public interface Subscriber extends Remote {
      */
     void newPublisher(Publisher publisher) throws RemoteException;
     
+    /**
+     * Invoked when a publisher to whom the client has been subscribed ceases
+     * to send messages to it, e.g. because it finishes its execution.
+     * 
+     * @param publisher publisher who ceases to publish
+     */
+    void notifyUnsubscribed(Publisher publisher) throws RemoteException;
+    
 }
