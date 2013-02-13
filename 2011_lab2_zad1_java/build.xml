@@ -1,0 +1,72 @@
+<project default="rebuild">
+	
+	<property name="exported" value="rmi" />
+	
+	<property name="pkg" value="rozprochy.rok2011.lab2.zad1" />
+	<property name="pkg.common" value="${pkg}.common" />
+	<property name="pkg.server" value="${pkg}.server" />
+	<property name="pkg.client" value="${pkg}.client" />
+
+	<property name="classes" value="bin" />
+	<property name="dist" value="dist" />
+	<property name="jar.common" value="common" />
+	<property name="jar.server" value="server" />
+	<property name="jar.client" value="client" />
+	
+	<property name="main.server" value="${pkg.server}.ComputeEngine" />
+	<property name="main.client" value="${pkg.client}.ComputePi" />
+	
+	<property name="src" value="src" />
+	<property name="jdk_version" value="1.6" />
+
+	<target name="clean">
+		<delete dir="${classes}" />
+		<delete dir="${dist}" />
+		<delete dir="${doc}" />
+	</target>
+
+	<target name="compile">
+		<mkdir dir="${classes}" />
+		<javac srcdir="${src}" 
+			destdir="${classes}" 
+        	includeantruntime="false"
+			source="${jdk_version}"
+			target="${jdk_version}" />
+	</target>
+
+	<target name="dist" depends="compile">
+		<mkdir dir="${dist}" />
+		
+		<jar destfile="${dist}/${jar.client}.jar" 
+			basedir="${classes}"
+			includes="**/client/*"
+            excludes="**/rmi/*" >
+			<manifest>
+				<attribute name="Main-Class" value="${main.client}" />
+			</manifest>
+		</jar>
+        <jar destfile="${dist}/${jar.client}_${exported}.jar" 
+            basedir="${classes}"
+            includes="**/client/rmi/*" />
+		
+		
+        <jar destfile="${dist}/${jar.server}.jar" 
+            basedir="${classes}"
+            includes="**/server/*">
+            <manifest>
+                <attribute name="Main-Class" value="${main.server}" />
+            </manifest>
+        </jar>
+        <jar destfile="${dist}/${jar.server}_${exported}.jar" 
+            basedir="${classes}"
+            includes="**/common/*" />
+		
+		
+        <jar destfile="${dist}/${jar.common}.jar" 
+            basedir="${classes}"
+            includes="**/common/*" />
+	</target>
+
+	<target name="rebuild" depends="clean,dist" />
+
+</project>
