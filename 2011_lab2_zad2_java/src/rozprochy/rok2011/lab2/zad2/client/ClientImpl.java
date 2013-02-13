@@ -56,8 +56,11 @@ public class ClientImpl extends UnicastRemoteObject implements Client {
     @Override
     public synchronized
     void subscribe(Subscriber client) throws RemoteException {
-        System.out.println("New subscriber");
-        subscribers.add(client);
+        // See newPublisher for discussion of this check
+        if (! this.equals(client)) {
+            System.out.println("New subscriber");
+            subscribers.add(client);
+        }
     }
     
 
@@ -76,7 +79,7 @@ public class ClientImpl extends UnicastRemoteObject implements Client {
      * {@inheritDoc}
      */
     @Override
-    public synchronized 
+    public
     void notifyMessage(Message message) throws RemoteException {
         System.out.println("Topic: " + message.getTopic());
         System.out.println("Content: " + message.getContent());
@@ -87,15 +90,29 @@ public class ClientImpl extends UnicastRemoteObject implements Client {
     /**
      * {@inheritDoc}
      */
-    @Override
-    public void newPublisher(Publisher publisher) throws RemoteException {
-        System.out.println("New relevant publisher");
-        try {
-            publisher.subscribe(this);
-            publishers.add(publisher);
-        } catch (RemoteException e) {
-            System.err.println("Subscription error: " + e.getMessage());
-            e.printStackTrace(System.err);
+    @Override 
+    public synchronized 
+    void newPublisher(Publisher publisher) throws RemoteException {
+        
+        // Checking self-subscription is vital due to thread synchronization. 
+        // RemoteObject does have appropriate equality semantics.
+        //
+        // CAVEAT: Docs say explicitly that RemoteObjects have appropriate
+        // equality semantics. Well, they don't. Not really, that is.
+        // Comparing stubs works fine, but comparing actual object to stub
+        // doesn't. In order to achieve desired effect a stub needs to be
+        // created from the object. RemoteObject has a toStub method, which
+        // does just that.
+
+        if (! publisher.equals(toStub(this))) {
+            System.out.println("New relevant publisher");
+            try {
+                publisher.subscribe(this);
+                publishers.add(publisher);
+            } catch (RemoteException e) {
+                System.err.println("Subscription error: " + e.getMessage());
+                e.printStackTrace(System.err);
+            }
         }
     }
     
