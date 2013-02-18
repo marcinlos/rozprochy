@@ -1,7 +1,7 @@
 <project default="rebuild">
-	
+
 	<property name="exported" value="rmi" />
-	
+
 	<property name="pkg" value="rozprochy.rok2011.lab2.zad2" />
 	<property name="pkg.common" value="${pkg}.common" />
 	<property name="pkg.server" value="${pkg}.server" />
@@ -12,10 +12,10 @@
 	<property name="jar.common" value="common" />
 	<property name="jar.server" value="server" />
 	<property name="jar.client" value="client" />
-	
+
 	<property name="main.server" value="${pkg.server}.ServerMain" />
 	<property name="main.client" value="${pkg.client}.ClientMain" />
-	
+
 	<property name="src" value="src" />
 	<property name="jdk_version" value="1.6" />
 
@@ -29,42 +29,41 @@
 		<mkdir dir="${classes}" />
 		<javac srcdir="${src}" 
 			destdir="${classes}" 
-        	includeantruntime="false"
+			includeantruntime="false"
 			source="${jdk_version}"
 			target="${jdk_version}" />
 	</target>
 
 	<target name="dist" depends="compile">
 		<mkdir dir="${dist}" />
-		
+
 		<jar destfile="${dist}/${jar.client}.jar" 
 			basedir="${classes}"
 			includes="**/client/*"
-            excludes="**/rmi/*" >
+			excludes="**/rmi/*" >
 			<manifest>
 				<attribute name="Main-Class" value="${main.client}" />
 			</manifest>
 		</jar>
-        <jar destfile="${dist}/${jar.client}_${exported}.jar" 
-            basedir="${classes}"
-            includes="**/client/rmi/*" />
-		
-		
-        <jar destfile="${dist}/${jar.server}.jar" 
-            basedir="${classes}"
-            includes="**/server/*">
-            <manifest>
-                <attribute name="Main-Class" value="${main.server}" />
-            </manifest>
-        </jar>
-        <jar destfile="${dist}/${jar.server}_${exported}.jar" 
-            basedir="${classes}"
-            includes="**/common/*" />
-		
-		
-        <jar destfile="${dist}/${jar.common}.jar" 
-            basedir="${classes}"
-            includes="**/common/*" />
+		<jar destfile="${dist}/${jar.client}_${exported}.jar" 
+			basedir="${classes}"
+			includes="**/client/rmi/*" />
+
+
+		<jar destfile="${dist}/${jar.server}.jar" 
+			basedir="${classes}"
+			includes="**/server/*">
+			<manifest>
+				<attribute name="Main-Class" value="${main.server}" />
+			</manifest>
+		</jar>
+		<jar destfile="${dist}/${jar.server}_${exported}.jar" 
+			basedir="${classes}"
+			includes="**/common/*" />
+
+		<jar destfile="${dist}/${jar.common}.jar" 
+			basedir="${classes}"
+			includes="**/common/*" />
 	</target>
 
 	<target name="rebuild" depends="clean,dist" />

@@ -25,7 +25,7 @@
 		<mkdir dir="${classes}" />
 		<javac srcdir="${src}" 
 			destdir="${classes}" 
-        	includeantruntime="false"
+			includeantruntime="false"
 			source="${jdk_version}"
 			target="${jdk_version}" />
 	</target>
