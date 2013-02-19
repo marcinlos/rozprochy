@@ -1,0 +1,11 @@
+module rozprochy {
+    module corba {
+        module test {
+            
+		    interface Greeter {
+		        string greet(in string name);
+		    };
+    
+        };
+    };
+};
