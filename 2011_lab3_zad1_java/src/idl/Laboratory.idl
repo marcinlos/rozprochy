@@ -1,0 +1,53 @@
+#ifndef LABORATORY_IDL
+#define LABORATORY_IDL
+
+module rozprochy {
+module rok2011 {
+module lab3 {
+module zad1 {
+
+    /* Device description */
+    struct DeviceDesc {
+        string name;
+        string type;
+    }; 
+
+    typedef sequence<DeviceDesc> DeviceDescSeq;
+    
+    interface Device {
+        readonly attribute string name;
+    };
+    
+    /* Device of given name does not exist */
+    exception NoSuchDevice { string name; };
+    
+    /* Device is controlled by another user, and so cannot be acquired */
+    exception DeviceAlreadyAcquired { };
+    
+    /* Device was not acquired during a release attempt */
+    exception DeviceNotAcquired { };
+    
+    enum AcquireMode {
+        WATCH,
+        CONTROL
+    };
+
+    interface Laboratory {
+
+        const string SERVICE_NAME = "LabServer";
+    
+        readonly attribute DeviceDescSeq allDevices;
+        
+        Device acquireDevice(in string name, in AcquireMode mode)
+            raises (NoSuchDevice, DeviceAlreadyAcquired);
+        
+        void releaseDevice(in string name) 
+            raises (NoSuchDevice, DeviceNotAcquired);
+    };
+
+};
+};
+};
+};
+
+#endif //LABORATORY_IDL
