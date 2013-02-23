@@ -28,8 +28,8 @@ module zad1 {
     exception DeviceNotAcquired { };
     
     enum AcquireMode {
-        WATCH,
-        CONTROL
+        watch,
+        control
     };
 
     interface Laboratory {

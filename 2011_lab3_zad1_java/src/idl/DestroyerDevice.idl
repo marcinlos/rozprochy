@@ -1,0 +1,64 @@
+
+#ifndef DESTROYER_DEVICE_IDL
+#define DESTROYER_DEVICE_IDL
+
+#include "Laboratory.idl"
+
+module rozprochy {
+module rok2011 {
+module lab3 {
+module zad1 {
+module destroyer {
+
+    /* Thrown upon an attempt to destroy indestructible entity */
+    exception Indestructable { };
+    
+    /* Thrown when name of an entity to be destroyed cannot be resolved */
+    exception EntityNotFound { };
+    
+    /* 
+     * Thrown when a firepower delivered by the device is insufficient 
+     * to destroy the target.
+     */
+    exception NotEnoughFirepower { 
+        unsigned long delivered;
+        unsigned long required;
+    };
+
+    /* Generic destroyer */
+    interface DestroyerDevice : Device {
+    
+        void destroy(in string what) 
+            raises (Indestructable, EntityNotFound, NotEnoughFirepower);
+            
+    };
+    
+    enum InvalidPositionReason {
+        out_of_range,
+        rocks,
+        water
+    };
+
+    exception InvalidPosition {
+        InvalidPositionReason reason; 
+    }; 
+    
+    struct Position {
+        long x;
+        long y;
+    };
+
+    /* Tank */
+    interface Tank : DestroyerDevice {
+        
+        attribute Position position setraises (InvalidPosition);
+        
+    };
+
+};
+};
+};
+};
+};
+
+#endif // DESTROYER_DEVICE_IDL
