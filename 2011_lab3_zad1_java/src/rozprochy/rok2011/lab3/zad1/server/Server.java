@@ -35,7 +35,7 @@ import rozprochy.rok2011.lab3.zad1.DeviceHelper;
 import rozprochy.rok2011.lab3.zad1.DeviceOperations;
 import rozprochy.rok2011.lab3.zad1.DevicePOATie;
 import rozprochy.rok2011.lab3.zad1.Laboratory;
-import rozprochy.rok2011.lab3.zad1.NoSuchDevice;
+import rozprochy.rok2011.lab3.zad1.LaboratoryPackage.NoSuchDevice;
 import rozprochy.rok2011.lab3.zad1.common.CORBAException;
 import rozprochy.rok2011.lab3.zad1.common.CORBAUtil;
 import rozprochy.rok2011.lab3.zad1.common.StringUtil;

@@ -6,10 +6,13 @@ module rok2011 {
 module lab3 {
 module zad1 {
 
+
     /* Device description */
     struct DeviceDesc {
         string name;
         string type;
+        boolean free;
+        long watchers;
     }; 
 
     typedef sequence<DeviceDesc> DeviceDescSeq;
@@ -18,24 +21,25 @@ module zad1 {
         readonly attribute string name;
     };
     
-    /* Device of given name does not exist */
-    exception NoSuchDevice { string name; };
-    
-    /* Device is controlled by another user, and so cannot be acquired */
-    exception DeviceAlreadyAcquired { };
-    
-    /* Device was not acquired during a release attempt */
-    exception DeviceNotAcquired { };
-    
-    enum AcquireMode {
-        watch,
-        control
-    };
 
     interface Laboratory {
 
         const string SERVICE_NAME = "LabServer";
-    
+        
+        enum AcquireMode {
+	        watch,
+	        control
+        };
+        
+        /* Device of given name does not exist */
+	    exception NoSuchDevice { string name; };
+	    
+	    /* Device is controlled by another user, and so cannot be acquired */
+	    exception DeviceAlreadyAcquired { };
+	    
+	    /* Device was not acquired during a release attempt */
+	    exception DeviceNotAcquired { };
+        
         readonly attribute DeviceDescSeq allDevices;
         
         Device acquireDevice(in string name, in AcquireMode mode)

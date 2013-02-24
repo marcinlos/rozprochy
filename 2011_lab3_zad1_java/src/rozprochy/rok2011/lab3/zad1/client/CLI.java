@@ -2,19 +2,20 @@ package rozprochy.rok2011.lab3.zad1.client;
 
 import java.io.IOException;
 
-import rozprochy.rok2011.lab3.zad1.common.AbstractCLI;
+import rozprochy.rok2011.lab3.zad1.Laboratory;
+import rozprochy.rok2011.lab3.zad1.common.CommandInterpreter;
 
-public class CLI extends AbstractCLI {
+/**
+ * Client command line interface
+ */
+public class CLI extends CommandInterpreter {
 
-    public CLI() throws IOException {
-        super();
-        // TODO Auto-generated constructor stub
-    }
+    private Laboratory laboratory;
+    private Client client;
 
-    @Override
-    protected boolean interpret(String line) {
-        // TODO Auto-generated method stub
-        return false;
+    public CLI(Client client, Laboratory laboratory) throws IOException {
+        this.laboratory = laboratory;
+        this.client = client;
     }
 
 }

@@ -30,7 +30,7 @@ public class Client {
     }
 
     public void run() throws IOException {
-        CLI cli = new CLI();
+        CLI cli = new CLI(this, laboratory);
         cli.run();
     }
 

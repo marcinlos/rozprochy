@@ -3,14 +3,14 @@ package rozprochy.rok2011.lab3.zad1.server;
 import java.util.HashMap;
 import java.util.Map;
 
-import rozprochy.rok2011.lab3.zad1.AcquireMode;
 import rozprochy.rok2011.lab3.zad1.Device;
-import rozprochy.rok2011.lab3.zad1.DeviceAlreadyAcquired;
 import rozprochy.rok2011.lab3.zad1.DeviceDesc;
-import rozprochy.rok2011.lab3.zad1.DeviceNotAcquired;
 import rozprochy.rok2011.lab3.zad1.DeviceOperations;
 import rozprochy.rok2011.lab3.zad1.LaboratoryPOA;
-import rozprochy.rok2011.lab3.zad1.NoSuchDevice;
+import rozprochy.rok2011.lab3.zad1.LaboratoryPackage.AcquireMode;
+import rozprochy.rok2011.lab3.zad1.LaboratoryPackage.DeviceAlreadyAcquired;
+import rozprochy.rok2011.lab3.zad1.LaboratoryPackage.DeviceNotAcquired;
+import rozprochy.rok2011.lab3.zad1.LaboratoryPackage.NoSuchDevice;
 import rozprochy.rok2011.lab3.zad1.provider.DeviceFactory;
 
 /**
@@ -19,8 +19,7 @@ import rozprochy.rok2011.lab3.zad1.provider.DeviceFactory;
 public class LaboratoryImpl extends LaboratoryPOA {
 
     /* List of devices without servant - servants are created lazily */
-    private Map<String, DeviceInstance> devices = 
-            new HashMap<String, DeviceInstance>();
+    private Map<String, DeviceInstance> devices = new HashMap<String, DeviceInstance>();
 
     /* Server */
     private final Server server;
@@ -53,6 +52,7 @@ public class LaboratoryImpl extends LaboratoryPOA {
     public synchronized Device acquireDevice(String name, AcquireMode mode)
             throws DeviceAlreadyAcquired, NoSuchDevice {
         System.out.println("acquireDevice()");
+        // Server will call back to the Laboratory methods
         return server.getDeviceReference(name);
     }
 
@@ -71,7 +71,8 @@ public class LaboratoryImpl extends LaboratoryPOA {
      * @return
      * @throws NoSuchDevice
      */
-    public DeviceOperations getDevice(String name) throws NoSuchDevice {
+    public synchronized DeviceOperations getDevice(String name)
+            throws NoSuchDevice {
         DeviceInstance device;
         synchronized (this) {
             device = devices.get(name);
@@ -82,18 +83,21 @@ public class LaboratoryImpl extends LaboratoryPOA {
             throw new NoSuchDevice(name);
         }
     }
-    
+
     /**
      * Adds a new device (name + servant factory) to the laboratory.
      * 
-     * @param name name of the device
-     * @param factory factory used to create servants 
-     * @throws DeviceAlreadyExists when a device with the same name is already
-     *         present in the lab.
+     * @param name
+     *            name of the device
+     * @param factory
+     *            factory used to create servants
+     * @throws DeviceAlreadyExists
+     *             when a device with the same name is already present in the
+     *             lab.
      */
-    public void registerDevice(String name, DeviceFactory factory) 
+    public synchronized void registerDevice(String name, DeviceFactory factory)
             throws DeviceAlreadyExists {
-        if (! devices.containsKey(name)) {
+        if (!devices.containsKey(name)) {
             DeviceInstance instance = new DeviceInstance(name, factory);
             devices.put(name, instance);
         } else {
@@ -105,8 +109,10 @@ public class LaboratoryImpl extends LaboratoryPOA {
 
     }
 
-    private static DeviceDesc makeDescription(DeviceInstance device) {
-        return new DeviceDesc(device.getName(), device.getType());
+    private DeviceDesc makeDescription(DeviceInstance device) {
+        String name = device.getName();
+        String type = device.getType();
+        return new DeviceDesc(name, type, true, 0);
     }
 
 }

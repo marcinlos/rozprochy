@@ -20,7 +20,7 @@ public class DefaultDeviceProviders implements DeviceProviders {
             providers.put(name, provider);
             System.out.println("* " + name);
         }
-        System.out.println("Loaded.");
+        System.out.println("Devices loaded.");
     }
 
     @Override

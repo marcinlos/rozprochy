@@ -9,7 +9,7 @@ public class DeviceAlreadyExists extends LabException {
     private String name;
 
     public DeviceAlreadyExists(String name) {
-
+        this.name = name;
     }
 
     /**

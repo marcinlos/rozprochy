@@ -86,6 +86,7 @@
 				<include name="${pkg.dir}/*" />
 				<include name="${pkg.dir}/common/*" />
 				<include name="${pkg.dir}/provider/*" />
+				<include name="${pkg.dir}/LaboratoryPackage/*" />
 			</fileset>
 		</jar>
 
