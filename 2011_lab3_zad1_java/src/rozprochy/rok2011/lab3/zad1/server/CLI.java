@@ -5,7 +5,7 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
 
-import rozprochy.rok2011.lab3.zad1.DeviceDesc;
+import rozprochy.rok2011.lab3.zad1.common.CmdShowDevices;
 import rozprochy.rok2011.lab3.zad1.common.Command;
 import rozprochy.rok2011.lab3.zad1.common.CommandInterpreter;
 import rozprochy.rok2011.lab3.zad1.provider.DeviceFactory;
@@ -25,6 +25,8 @@ public class CLI extends CommandInterpreter {
             throws IOException {
         this.laboratory = laboratory;
         this.providers = providers;
+        
+        this.cmdShowDevices = new CmdShowDevices(laboratory);
         
         registerHandler("add", cmdAdd);
         registerHandler("show", cmdShowDevices);
@@ -53,29 +55,7 @@ public class CLI extends CommandInterpreter {
         }
     };
     
-    private Command cmdShowDevices = new Command() {
-
-        @Override
-        public boolean execute(String cmd, Scanner input) {
-            DeviceDesc[] devices = laboratory.allDevices();
-            if (devices.length != 0) {
-                int i = 0;
-                for (DeviceDesc device : devices) {
-                    System.out.println(formatInfo(device, ++ i));
-                }
-            } else {
-                System.out.println("(no devices)");
-            }
-            return true;
-        }
-        
-        private String formatInfo(DeviceDesc device, int i) {
-            String controlled = device.free ? "" : "* ";
-            return String.format("%d. %s (%s)%s [%d]", i, device.name,
-                    device.type, controlled, device.watchers);
-        }
-        
-    };
+    private Command cmdShowDevices;
     
     private Command cmdShowTypes = new Command() {
 
