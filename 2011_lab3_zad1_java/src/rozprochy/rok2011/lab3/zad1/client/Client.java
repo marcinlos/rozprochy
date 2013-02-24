@@ -13,7 +13,7 @@ import org.omg.CosNaming.NamingContextPackage.NotFound;
 import rozprochy.rok2011.lab3.zad1.Laboratory;
 import rozprochy.rok2011.lab3.zad1.LaboratoryHelper;
 import rozprochy.rok2011.lab3.zad1.comon.CORBAException;
-import rozprochy.rok2011.lab3.zad1.comon.Util;
+import rozprochy.rok2011.lab3.zad1.comon.CORBAUtil;
 
 public class Client {
 
@@ -57,14 +57,14 @@ public class Client {
         } catch (NotFound e) {
             System.err.println("Laboratory (" + labServiceName + ") " + 
                     "not found by the name service");
-            String reason = Util.formatNotFoundReason(e);
+            String reason = CORBAUtil.formatNotFoundReason(e);
             System.err.println(reason);
             throw new CORBAException(e);
         } catch (CannotProceed e) {
             System.err.println("Some problem encountered while resolving " + 
                     "laboratory name (" + labServiceName + ")");
             System.err.println("Only part of the path resolved");
-            String rest = Util.formatName(e.rest_of_name);
+            String rest = CORBAUtil.formatName(e.rest_of_name);
             System.err.println("Remaining part of path: " + rest);
             throw new CORBAException(e);
         } catch (org.omg.CosNaming.NamingContextPackage.InvalidName e) {

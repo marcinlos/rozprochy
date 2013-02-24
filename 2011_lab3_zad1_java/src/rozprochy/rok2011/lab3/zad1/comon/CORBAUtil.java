@@ -4,9 +4,9 @@ import org.omg.CosNaming.NameComponent;
 import org.omg.CosNaming.NamingContextPackage.NotFound;
 import org.omg.CosNaming.NamingContextPackage.NotFoundReason;
 
-public class Util {
+public class CORBAUtil {
     
-    private Util() { }
+    private CORBAUtil() { }
 
     /**
      * Formats the name given by array of components using slash (/) as
