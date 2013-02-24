@@ -19,7 +19,8 @@ import rozprochy.rok2011.lab3.zad1.provider.DeviceFactory;
 public class LaboratoryImpl extends LaboratoryPOA {
 
     /* List of devices without servant - servants are created lazily */
-    private Map<String, DeviceInstance> devices = new HashMap<String, DeviceInstance>();
+    private Map<String, DeviceInstance> devices = 
+            new HashMap<String, DeviceInstance>();
 
     /* Server */
     private final Server server;

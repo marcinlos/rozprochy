@@ -7,11 +7,11 @@ import java.util.Map;
 
 import rozprochy.rok2011.lab3.zad1.provider.DeviceFactory;
 
-public class FixedDeviceProvider implements DeviceProviders {
+public class FixedDeviceProviders implements DeviceProviders {
 
     private Map<String, DeviceFactory> providers = new HashMap<String, DeviceFactory>();
 
-    public FixedDeviceProvider(Class<? extends DeviceFactory>... classes) {
+    public FixedDeviceProviders(Class<? extends DeviceFactory>... classes) {
         for (Class<? extends DeviceFactory> clazz : classes) {
             try {
                 Constructor<? extends DeviceFactory> ctr = getCtor(clazz);

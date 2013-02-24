@@ -12,8 +12,8 @@ import org.omg.CosNaming.NamingContextPackage.NotFound;
 
 import rozprochy.rok2011.lab3.zad1.Laboratory;
 import rozprochy.rok2011.lab3.zad1.LaboratoryHelper;
-import rozprochy.rok2011.lab3.zad1.comon.CORBAException;
-import rozprochy.rok2011.lab3.zad1.comon.CORBAUtil;
+import rozprochy.rok2011.lab3.zad1.common.CORBAException;
+import rozprochy.rok2011.lab3.zad1.common.CORBAUtil;
 
 public class Client {
 

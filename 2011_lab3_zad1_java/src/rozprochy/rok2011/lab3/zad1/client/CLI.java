@@ -2,7 +2,7 @@ package rozprochy.rok2011.lab3.zad1.client;
 
 import java.io.IOException;
 
-import rozprochy.rok2011.lab3.zad1.comon.AbstractCLI;
+import rozprochy.rok2011.lab3.zad1.common.AbstractCLI;
 
 public class CLI extends AbstractCLI {
 

@@ -1,4 +1,4 @@
-package rozprochy.rok2011.lab3.zad1.comon;
+package rozprochy.rok2011.lab3.zad1.common;
 
 import java.io.BufferedReader;
 import java.io.IOException;

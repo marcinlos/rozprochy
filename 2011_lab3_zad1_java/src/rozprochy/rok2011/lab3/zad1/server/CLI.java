@@ -4,8 +4,8 @@ import java.io.IOException;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
 
-import rozprochy.rok2011.lab3.zad1.comon.Command;
-import rozprochy.rok2011.lab3.zad1.comon.CommandInterpreter;
+import rozprochy.rok2011.lab3.zad1.common.Command;
+import rozprochy.rok2011.lab3.zad1.common.CommandInterpreter;
 import rozprochy.rok2011.lab3.zad1.provider.DeviceFactory;
 
 /**

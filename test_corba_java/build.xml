@@ -1,7 +1,5 @@
 <project default="rebuild" basedir=".">
 
-	<property name="exported" value="rmi" />
-
 	<property name="pkg" value="rozprochy.corba.test" />
 	<property name="pkg.server" value="${pkg}.server" />
 	<property name="pkg.client" value="${pkg}.client" />
@@ -81,6 +79,6 @@
 		
 	</target>
 
-			<target name="rebuild" depends="clean,dist" />
+	<target name="rebuild" depends="clean,dist" />
 
-		</project>
+</project>

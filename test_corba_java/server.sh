@@ -13,7 +13,8 @@ cp=$(colon_join ${jar_list})
 echo "Address: ${host}:${port}"
 
 
-params="-ORBInitialHost ${host} -ORBInitialPort ${port}"
+# params="-ORBInitialHost ${host} -ORBInitialPort ${port}"
+params="-ORBInitRef NameService=corbaname::${host}:${port}"
 svhost="-Dcom.sun.CORBA.ORBServerHost=${host}"
 cmd="java -cp ${cp} ${svhost} ${class} ${params}"
 ${cmd}

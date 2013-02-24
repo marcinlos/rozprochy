@@ -3,9 +3,13 @@
 	<property name="pkg" value="rozprochy.rok2011.lab3.zad1" />
 	<property name="pkg.server" value="${pkg}.server" />
 	<property name="pkg.client" value="${pkg}.client" />
+	
+	<!-- FIX IT, MORON -->
+	<property name="pkg.dir" value="rozprochy/rok2011/lab3/zad1" />
 
 	<property name="classes" value="bin" />
 	<property name="dist" value="dist" />
+	<property name="device.dir" value="${dist}/device" />
 	<property name="jar.server" value="server" />
 	<property name="jar.client" value="client" />
 	<property name="jar.common" value="common" />
@@ -29,7 +33,7 @@
 	<taskdef name="idlcheck" 
 		classname="idldepend.IDLCheckerTask" 
 		classpathref="ant.lib.path"	/>
-	
+
 	<target name="clean">
 		<delete dir="${gen_src}" />
 		<delete dir="${classes}" />
@@ -77,9 +81,22 @@
 			</manifest>
 		</jar>
 
-		<jar destfile="${dist}/${jar.common}.jar" 
-			basedir="${classes}"
-			excludes="**/server/*,**/client/*">
+		<jar destfile="${dist}/${jar.common}.jar">
+			<fileset dir="${classes}" >
+				<include name="${pkg.dir}/*" />
+				<include name="${pkg.dir}/common/*" />
+				<include name="${pkg.dir}/provider/*" />
+			</fileset>
+		</jar>
+
+		<jar destfile="${device.dir}/destroyer.jar">
+			<fileset dir="${classes}" >
+				<include name="${pkg.dir}/destroyer/*" />
+			</fileset>
+			<service 
+				type="rozprochy.rok2011.lab3.zad1.provider.DeviceFactory" 
+				provider="rozprochy.rok2011.lab3.zad1.destroyer.TankProvider" 
+			/>
 		</jar>
 	</target>
 

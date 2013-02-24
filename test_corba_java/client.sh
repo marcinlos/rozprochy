@@ -10,8 +10,8 @@ class="${pkg}.${main}"
 jar_list=(${jars[@]/#/${dist}/})
 cp=$(colon_join ${jar_list})
 
-connection="-ORBInitialHost ${host} -ORBInitialPort ${port}"
-cmd="java -cp ${cp} ${class} ${connection}"
+params="-ORBInitRef NameService=corbaname::${host}:${port}"
+cmd="java -cp ${cp} ${class} ${params}"
 ${cmd}
 
 

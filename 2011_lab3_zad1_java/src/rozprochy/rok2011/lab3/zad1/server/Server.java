@@ -36,10 +36,9 @@ import rozprochy.rok2011.lab3.zad1.DeviceOperations;
 import rozprochy.rok2011.lab3.zad1.DevicePOATie;
 import rozprochy.rok2011.lab3.zad1.Laboratory;
 import rozprochy.rok2011.lab3.zad1.NoSuchDevice;
-import rozprochy.rok2011.lab3.zad1.comon.CORBAException;
-import rozprochy.rok2011.lab3.zad1.comon.CORBAUtil;
-import rozprochy.rok2011.lab3.zad1.comon.StringUtil;
-import rozprochy.rok2011.lab3.zad1.destroyer.TankProvider;
+import rozprochy.rok2011.lab3.zad1.common.CORBAException;
+import rozprochy.rok2011.lab3.zad1.common.CORBAUtil;
+import rozprochy.rok2011.lab3.zad1.common.StringUtil;
 
 public class Server {
     
@@ -79,8 +78,7 @@ public class Server {
 
     public void run() throws IOException {
         
-        @SuppressWarnings("unchecked")
-        DeviceProviders providers = new FixedDeviceProvider(TankProvider.class);
+        DeviceProviders providers = new DefaultDeviceProviders();
         
         CLI cli = new CLI(laboratory, providers);
         cli.run();
