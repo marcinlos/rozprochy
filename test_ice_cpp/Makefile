@@ -59,6 +59,7 @@ CFLAGS = -Wall -g
 
 .PHONY: all
 all: ${EXECS}
+	echo ${CXX}
 
 .SECONDEXPANSION:
 ${EXECS}: ${bindir}/%: $${$$*_OBJS} ${ICE_OBJS}

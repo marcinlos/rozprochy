@@ -23,6 +23,6 @@ public class CLI extends CommandInterpreter {
         
         registerHandler("show", cmdShowDevices);
     }
-
     
 }
+
