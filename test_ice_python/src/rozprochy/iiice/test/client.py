@@ -1,6 +1,9 @@
 
 import Ice, sys, traceback
-import rozprochy.iiice.test
+from rozprochy.iiice.test import PrinterPrx
+try: from Printer_ice import PrinterPrx
+except: pass
+
 
 if __name__ == '__main__':
     status = 0
@@ -8,12 +11,19 @@ if __name__ == '__main__':
     try:
         ic = Ice.initialize(sys.argv)
         base = ic.stringToProxy('SimplePrinter:default -p 10000')
-        printer = rozprochy.iiice.test.PrinterPrx.checkedCast(base)
+        printer = PrinterPrx.checkedCast(base)
         if not printer:
             raise RuntimeError('Cannot obtain printer proxy')
         printer._print('Hello world from Python!')
     except:
         traceback.print_exc()
         status = 1
+    finally:
+        if ic:
+            try:
+                ic.destroy()
+            except:
+                traceback.print_exc()
+                status = 1
     sys.exit(status)
         
