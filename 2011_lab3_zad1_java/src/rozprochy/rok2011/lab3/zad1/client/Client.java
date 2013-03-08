@@ -1,7 +1,11 @@
 package rozprochy.rok2011.lab3.zad1.client;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
+import org.omg.CORBA.InterfaceDef;
+import org.omg.CORBA.InterfaceDefHelper;
 import org.omg.CORBA.ORB;
 import org.omg.CORBA.Object;
 import org.omg.CORBA.ORBPackage.InvalidName;
@@ -10,8 +14,12 @@ import org.omg.CosNaming.NamingContextExtHelper;
 import org.omg.CosNaming.NamingContextPackage.CannotProceed;
 import org.omg.CosNaming.NamingContextPackage.NotFound;
 
+import rozprochy.rok2011.lab3.zad1.Device;
 import rozprochy.rok2011.lab3.zad1.Laboratory;
 import rozprochy.rok2011.lab3.zad1.LaboratoryHelper;
+import rozprochy.rok2011.lab3.zad1.LaboratoryPackage.AcquireMode;
+import rozprochy.rok2011.lab3.zad1.LaboratoryPackage.DeviceAlreadyAcquired;
+import rozprochy.rok2011.lab3.zad1.LaboratoryPackage.NoSuchDevice;
 import rozprochy.rok2011.lab3.zad1.common.CORBAException;
 import rozprochy.rok2011.lab3.zad1.common.CORBAUtil;
 
@@ -22,6 +30,10 @@ public class Client {
 
     private Laboratory laboratory;
     private final String labServiceName = Laboratory.SERVICE_NAME;
+    
+    /** Map of devices acquired on the server */
+    private Map<String, Device> controlledDevices = new HashMap<String, Device>();
+    
 
     public Client(ORB orb) throws CORBAException {
         this.orb = orb;
@@ -29,11 +41,30 @@ public class Client {
         this.laboratory = getLaboratory();
     }
 
+    
     public void run() throws IOException {
         CLI cli = new CLI(this, laboratory);
         cli.run();
     }
+    
+    public void acquire(String name) throws DeviceAlreadyAcquired, NoSuchDevice {
+        Device device = laboratory.acquireDevice(name, AcquireMode.control);
+        controlledDevices.put(name, device);
+        System.out.println("Device acquired");
 
+    }
+    
+    public InterfaceDef getDeviceInterface(String name) throws NoSuchDevice {
+        Device device = controlledDevices.get(name);
+        if (device != null) {
+            Object ifaceObj = device._get_interface_def();
+            InterfaceDef iface = InterfaceDefHelper.narrow(ifaceObj);
+            return iface;
+        } else {
+            throw new NoSuchDevice(name);
+        }
+    }
+    
     private NamingContextExt getNameService() throws CORBAException {
         try {
             Object obj = orb.resolve_initial_references("NameService");
@@ -46,6 +77,15 @@ public class Client {
             throw new CORBAException(e);
         }
     }
+    
+    
+    /*private Repository getInterfaceRepository() throws CORBAException {
+        try {
+            Object obj = orb.resolve_initial_references("InterfaceRepository");
+        } finally {
+            
+        }
+    }*/
 
     /*
      * Obtains laboratory reference

@@ -11,7 +11,7 @@ jar_list=(${jars[@]/#/${dist}/})
 cp=$(colon_join ${jar_list})
 
 params="-ORBInitRef NameService=corbaname::${host}:${port}"
-cmd="java -cp ${cp} ${class} ${params}"
+cmd="jaco -DORBInitRef.InterfaceRepository=http://localhost/~los/ir/dupa.ir -cp ${cp} ${class} ${params}"
 ${cmd}
 
 

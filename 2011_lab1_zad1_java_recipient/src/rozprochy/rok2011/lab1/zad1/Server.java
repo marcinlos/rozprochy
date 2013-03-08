@@ -109,7 +109,7 @@ public class Server {
         
         DataInput input = new DataInputStream(client.getInputStream());
         DataOutput output = new DataOutputStream(client.getOutputStream());
-        
+ 
         byte type = input.readByte();
 
         if (type == 'b') {
