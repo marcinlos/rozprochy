@@ -1,0 +1,5 @@
+grant codeBase "file:dist/server.jar" {
+    permission java.net.SocketPermission "*:1024-", "accept, connect, resolve";
+    permission java.lang.RuntimePermission "writeFileDescriptor";
+    permission java.lang.RuntimePermission "readFileDescriptor";
+};

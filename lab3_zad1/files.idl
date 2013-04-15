@@ -1,0 +1,67 @@
+module files {
+
+    interface Node;
+    typedef sequence<Node> NodeSeq;
+    interface ChangeListener;
+
+    interface FileSystem {
+        readonly attribute NodeSeq roots;
+        void add_change_listener(in ChangeListener listener);
+        void remove_change_listener(in ChangeListener listener);
+    };
+    
+    exception PermissionDenied { };
+    
+    exception FileLocked { };
+
+    enum FileType {
+        regular,
+        directory,
+        symlink,
+        device,
+        pipe,
+        socket
+    };
+    
+    interface ChangeListener {
+        void file_changed(in Node file);
+    };
+
+    interface Node {
+        readonly attribute string name;
+        readonly attribute long size;
+        readonly attribute long permission;
+        readonly attribute FileType type;
+    };
+    
+    interface InputStream;
+    interface Stream;
+    interface Lock;
+    
+    interface File : Node {
+        Lock lock() raises (PermissionDenied, FileLocked);
+        InputStream begin_read() raises (PermissionDenied, FileLocked);
+        Stream begin_write() raises (PermissionDenied, FileLocked);
+    };
+	
+	interface Lock {
+	   void unlock();
+	};
+	
+	exception InvalidLine { };
+	
+	interface InputStream {
+	   string read_line(in long num) raises (InvalidLine);
+	   void close();
+	};
+	
+	interface Stream : InputStream {
+	   void modify_line(in long num, in string line) raises (InvalidLine);
+	   void delete_line(in long num) raises (InvalidLine);
+	   void append_line(in long num, in string line) raises (InvalidLine);
+	};
+	
+	interface Directory : Node {
+	   readonly attribute NodeSeq children;
+	};
+};

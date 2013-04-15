@@ -1,0 +1,94 @@
+<project default="rebuild" basedir=".">
+
+	<property name="pkg" value="rozprochy.lab3" />
+	<property name="pkg.server" value="${pkg}.server" />
+	<property name="pkg.client" value="${pkg}.client" />
+
+	<!-- FIX IT, MORON -->
+	<property name="pkg.dir" value="rozprochy/lab3" />
+
+	<property name="classes" value="bin" />
+	<property name="dist" value="dist" />
+	<property name="device.dir" value="${dist}/device" />
+	<property name="jar.server" value="server" />
+	<property name="jar.client" value="client" />
+	<property name="jar.common" value="common" />
+
+	<property name="main.server" value="${pkg.server}.ServerMain" />
+	<property name="main.client" value="${pkg.client}.ClientMain" />
+
+	<property name="src" value="src" />
+	<property name="src.idl" value="${src}/idl" />
+	<property name="gen_src" value="${src}/generated" />
+	<property name="jdk_version" value="1.6" />
+
+	<path id="ant.lib.path">
+		<fileset dir="ant" includes="lib/*.jar" />
+	</path>
+
+	<path id="lib.path">
+		<fileset dir="lib" includes="*.jar" />
+	</path>
+
+	<taskdef name="idlcheck" 
+		classname="idldepend.IDLCheckerTask" 
+		classpathref="ant.lib.path"	/>
+
+	<target name="clean">
+		<delete dir="${gen_src}" />
+		<delete dir="${classes}" />
+		<delete dir="${dist}" />
+		<delete dir="${doc}" />
+	</target>
+
+	<target name="idl">
+		<mkdir dir="${gen_src}" />
+		<idlcheck compiler="jdk" targetdir="${gen_src}" side="allTIE">
+			<package module="MiddlewareTestbed" prefix="rozprochy.lab3" />
+			<fileset dir="${src.idl}">
+				<include name="*.idl" />
+			</fileset>
+		</idlcheck>
+	</target>
+
+	<target name="compile" depends="idl">
+		<mkdir dir="${classes}" />
+		<javac srcdir="${src}:${gen_src}" 
+			destdir="${classes}" 
+			
+			includeantruntime="false"
+			source="${jdk_version}"
+			target="${jdk_version}" />
+	</target>
+
+	<target name="dist" depends="compile">
+		<mkdir dir="${dist}" />
+
+		<jar destfile="${dist}/${jar.client}.jar" 
+			basedir="${classes}"
+			includes="**/client/*" >
+			<manifest>
+				<attribute name="Main-Class" value="${main.client}" />
+			</manifest>
+		</jar>
+
+		<jar destfile="${dist}/${jar.server}.jar" 
+			basedir="${classes}"
+			includes="${pkg.dir}/server/*">
+			<manifest>
+				<attribute name="Main-Class" value="${main.server}" />
+			</manifest>
+		</jar>
+
+		<jar destfile="${dist}/${jar.common}.jar" basedir="${classes}">
+			<fileset dir="${classes}">
+				<include name="${pkg.dir}/MiddlewareTestbed/*"/>
+				<include name="${pkg.dir}/common/*"/>
+			</fileset>
+			
+		</jar>
+	</target>
+
+	<target name="rebuild" depends="clean,dist" />
+
+</project>
