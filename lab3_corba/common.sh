@@ -23,11 +23,19 @@ name="factory"
 
 while [[ "$1" != "" ]]; do
     case $1 in
-        "--ip")
+        "-h" | "--help")
+            echo "Usage: script [options...]"
+            echo "  --nameserv           address of IOR file"
+            echo "  --IOR                IOR (string)"
+            echo "  --name               name of the factory"
+            echo "  --host               address exported in proxies"
+            exit
+            ;;
+        "--ns")
             shift
             address=$1
             ;;
-        "--ior")
+        "--IOR")
             shift
             address=$(read_ior $1)
             ;;
@@ -40,9 +48,11 @@ while [[ "$1" != "" ]]; do
             name=$1
             ;;
         *)
+            echo "Unrecognized option: \`${1}'"
             shift
             ;;
     esac
+    shift
 done
 
 echo "Address: ${address}"
