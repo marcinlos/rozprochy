@@ -1,0 +1,34 @@
+#ifndef IO_IDL
+#define IO_IDL
+
+module files{
+module io {
+
+    enum Whence { FROM_START, FROM_CURRENT, FROM_END };
+
+    exception InvalidPosition { };
+    exception EOF { };
+
+    typedef sequence<octet> RawData;
+
+    interface Stream { 
+        long go_to(in long offset, in Whence whence) raises (InvalidPosition);
+        void close();
+    };   
+
+	interface InputStream {
+        long read(in long max, out RawData data) raises (EOF);
+	};
+	
+	interface OutputStream : Stream {
+        long write(in RawData data);
+	};
+
+    interface IOStream : InputStream, OutputStream { 
+        
+    };
+
+};
+};
+
+#endif // IO_IDL
