@@ -11,18 +11,15 @@ using rozprochy::lab3::Client;
 
 int main(int argc, char* argv[])
 {
-    std::istringstream ss("123");
-    int c;
-    ss >> c;
-    if (! ss) { std::cout << "HAFSHDFSDHFSDFSDFSDFSDF" << std::endl; }
     int status = 0;
     Ice::CommunicatorPtr ice;
     try
     {
         ice = Ice::initialize(argc, argv);
         std::cout << "Attempting to get a reference..." << std::endl;
-        Ice::ObjectPrx object = ice->stringToProxy("mlosFactory:default -p 6666");
+        Ice::ObjectPrx object = ice->propertyToProxy("Factory.Address");
         std::cout << "Casting..." << std::endl;
+        //AFactoryPrx factory = AFactoryPrx::checkedCast(object);
         AFactoryPrx factory = AFactoryPrx::checkedCast(object);
         if (factory)
         {

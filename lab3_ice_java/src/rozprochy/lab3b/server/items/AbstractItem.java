@@ -20,7 +20,7 @@ public class AbstractItem extends _ItemDisp {
     }
 
     @Override
-    public long getItemAge(Current __current) {
+    public int getItemAge(Current __current) {
         long now = System.currentTimeMillis();
         return (int)((now - begin) / 1000);
     }

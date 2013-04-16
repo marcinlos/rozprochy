@@ -14,10 +14,7 @@ vpath %.ice ${icedir}
 
 SLICE = slice2cpp
 
-# OH MY GOD, SO MUCH BLOOD!
-# Hack so ugly it fuckin' hurts :/
-# Ice still doesn't work with gcc 4.7
-# Don't have time to take a closer look rigth now
+
 CXX = g++-4.6
 
 

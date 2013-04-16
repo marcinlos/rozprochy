@@ -55,14 +55,11 @@ public class AFactoryImpl extends AFactoryPOA {
     }
     
     private POA poa;
-    
-    // Placeholder
-    public class ChuckToLamaException extends RuntimeException { }
-    
     private Map<String, ItemState> items = new HashMap<String, ItemState>();
-    
     private final Object lock = new Object();
     
+    private ServantFactory defaultFactor = new BrutalFactory(ItemAImpl.class, 
+            ItemAOperations.class, ItemAPOATie.class);
     private Map<String, ServantFactory> factories = 
             new HashMap<String, ServantFactory>();
     
@@ -122,19 +119,18 @@ public class AFactoryImpl extends AFactoryPOA {
                 throw new ItemAlreadyExists();
             } else {
                 ServantFactory factory = factories.get(type);
-                if (factory != null) {
-                    Item item = createItem(factory, name);
-                    ItemState state = new ItemState(item);
-                    items.put(name, state);
-                    state.take();
-                    System.out.println("Item [" + name + "] created");
-                    return state.getItem();
-                } else {
+                if (factory == null) {
                     System.out.println("[Warning] Item [" + name + 
-                            "] of unknown type `" + type + "' requested");
-                    // Czekierda lama
-                    throw new ChuckToLamaException();
+                            "] of unknown type `" + type + "' requested; " +
+                            "using default");
+                    factory = defaultFactor;
                 }
+                Item item = createItem(factory, name);
+                ItemState state = new ItemState(item);
+                items.put(name, state);
+                state.take();
+                System.out.println("Item [" + name + "] created");
+                return state.getItem();
             }
         }
     }

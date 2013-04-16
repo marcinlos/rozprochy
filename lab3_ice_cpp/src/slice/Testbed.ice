@@ -18,7 +18,7 @@
    
    interface Item {
       idempotent string name();
-      idempotent long getItemAge();
+      idempotent int getItemAge();
    };
    
    interface ItemA extends Item {
@@ -30,6 +30,6 @@
    };
    
    interface ItemC extends Item {
-      void actionC(long a, out long aOut, out short b);
+      void actionC(int a, out int aOut, out short b);
    };
 }; 

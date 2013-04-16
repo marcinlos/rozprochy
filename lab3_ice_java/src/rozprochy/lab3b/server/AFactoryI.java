@@ -55,14 +55,11 @@ public class AFactoryI extends _AFactoryDisp {
     }
     
     private Ice.ObjectAdapter adapter;
-    
-    // Placeholder
-    public class ChuckToLamaException extends RuntimeException { }
-    
     private Map<String, ItemState> items = new HashMap<String, ItemState>();
-    
     private final Object lock = new Object();
     
+    private ServantFactory defaultFactory = new BrutalFactory(ItemAImpl.class, 
+            _ItemAOperations.class, _ItemATie.class);
     private Map<String, ServantFactory> factories = 
             new HashMap<String, ServantFactory>();
     
@@ -123,22 +120,21 @@ public class AFactoryI extends _AFactoryDisp {
                 throw new ItemAlreadyExists();
             } else {
                 ServantFactory factory = factories.get(type);
-                if (factory != null) {
-                    Item item = factory.create(name);
-                    ObjectPrx objPrx = adapter.addWithUUID(item);
-                    System.out.println("ID: " + objPrx.ice_getIdentity());
-                    ItemState state = new ItemState(item, objPrx.ice_getIdentity());
-                    System.out.println("Szit: " + adapter.find(state.getId()));
-                    items.put(name, state);
-                    state.take();
-                    System.out.println("Item [" + name + "] created");
-                    return ItemPrxHelper.checkedCast(objPrx);
-                } else {
+                if (factory == null) {
                     System.out.println("[Warning] Item [" + name + 
-                            "] of unknown type `" + type + "' requested");
-                    // Czekierda lama
-                    throw new ChuckToLamaException();
+                            "] of unknown type `" + type + "' requested; " +
+                            "using default");
+                    factory = defaultFactory;
                 }
+                Item item = factory.create(name);
+                ObjectPrx objPrx = adapter.addWithUUID(item);
+                System.out.println("ID: " + objPrx.ice_getIdentity());
+                ItemState state = new ItemState(item, objPrx.ice_getIdentity());
+                System.out.println("Szit: " + adapter.find(state.getId()));
+                items.put(name, state);
+                state.take();
+                System.out.println("Item [" + name + "] created");
+                return ItemPrxHelper.checkedCast(objPrx);
             }
         }
     }

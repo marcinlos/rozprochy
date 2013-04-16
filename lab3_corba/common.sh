@@ -25,8 +25,8 @@ while [[ "$1" != "" ]]; do
     case $1 in
         "-h" | "--help")
             echo "Usage: script [options...]"
-            echo "  --nameserv           address of IOR file"
-            echo "  --IOR                IOR (string)"
+            echo "  --nameserv           address of NameService"
+            echo "  --IOR                IOR (value/address/file)"
             echo "  --name               name of the factory"
             echo "  --host               address exported in proxies"
             exit

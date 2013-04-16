@@ -185,6 +185,7 @@ public class Client {
     private AFactory getFactory() throws CORBAException {
         try {
             Object obj = nameService.resolve_str(serviceName);
+            System.out.println("IOR: " + orb.object_to_string(obj));
             return AFactoryHelper.narrow(obj);
         } catch (NotFound e) {
             System.err.println("ServantFactory (" + serviceName + ") " + 
