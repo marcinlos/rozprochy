@@ -8,6 +8,8 @@ module files {
     exception PermissionDenied { };
     exception FileLocked { };
     exception FileInUse { };
+    exception FileAlreadyExists { };
+    exception InvalidName { };
     exception NoSuchFile { };
 
     interface Node;
@@ -18,7 +20,7 @@ module files {
     };
 
     interface FileSystem {
-        readonly attribute NodeSeq roots;
+        NodeSeq get_roots();
         Node find_file(in string path) raises (NoSuchFile);
         void register_callback(in FileCallback cb);
         void unregister_callback(in FileCallback cb);
@@ -34,7 +36,7 @@ module files {
     };
     
     interface Node {
-        readonly attribute string name;
+        attribute string name setraises (PermissionDenied, FileAlreadyExists, InvalidName);
         readonly attribute long size;
         readonly attribute long permission;
         readonly attribute FileType type;
@@ -43,6 +45,8 @@ module files {
 	interface Directory : Node {
 	    NodeSeq get_children() raises (PermissionDenied);
         Node get_child(in string name) raises (PermissionDenied, NoSuchFile);
+        Node new_node(in string name, in FileType type) raises 
+            (PermissionDenied, NodeAlreadyExists, InvalidName)
 	}; 
 	
 	interface Lock {
