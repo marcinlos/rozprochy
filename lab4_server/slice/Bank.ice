@@ -27,7 +27,7 @@ module Bank {
 
 
     interface SystemManager {
-        bool createAccount(string pesel, string password) throws RegisterException;
+        void createAccount(string pesel, string password) throws RegisterException;
         string login(string pesel, string password) throws LoginException;
         string logout(string sessionId) throws SessionException;  
     };
