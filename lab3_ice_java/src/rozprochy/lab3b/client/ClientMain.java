@@ -9,12 +9,6 @@ public class ClientMain {
             ice = Ice.Util.initialize(args);
             Client client = new Client(ice);
             client.run();
-            String address = "SimplePrinter:default -p 10000";
-            Ice.ObjectPrx obj = ice.stringToProxy(address);
-            //PrinterPrx printer = PrinterPrxHelper.checkedCast(obj);
-            //if (printer != null) {
-            //    printer.print("Hello, world");
-            //}
         } catch (Exception e) { 
             handleException(e);
         } finally {
