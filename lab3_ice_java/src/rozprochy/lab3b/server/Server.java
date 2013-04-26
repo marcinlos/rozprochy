@@ -22,7 +22,6 @@ public class Server {
     
     private final Ice.Communicator ice;
 
-    
     public Server(Ice.Communicator ice) {
         this.ice = ice;
         this.config = ice.getProperties();

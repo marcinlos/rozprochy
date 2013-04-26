@@ -1,3 +1,6 @@
 /fun_corba_java
 /copy.sh
 zad3-rozpr/
+bin/
+*.log
+*~
