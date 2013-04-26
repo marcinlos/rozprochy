@@ -11,18 +11,31 @@ public class Server extends Ice.Application {
         System.exit(status);
     }
     
+    private class ShutdownHook implements Runnable {
+        
+        @Override
+        public void run() {
+            System.out.println("\rShutting down...");
+            System.out.print("Destroying communicator...");
+            communicator().destroy();
+            System.out.println("done");
+            System.out.println("Shutdown procedure completed.");
+        }
+        
+    }
+    
     private void setupBank() {
         System.out.print("Creating bank adapter...");
         System.out.flush();
         Ice.ObjectAdapter adapter = communicator().createObjectAdapter("Bank");
         System.out.println("done");
-        System.out.print("Activating system manager servant...");
+        System.out.print("Activating system manager servant");
         System.out.flush();
-        SystemManagerImpl system = new SystemManagerImpl();
+        SystemManagerImpl system = new SystemManagerImpl(adapter);
         Identity id = communicator().stringToIdentity("BankManager");
         adapter.add(system, id);
         adapter.activate();
-        System.out.println("done");
+        System.out.println("System manager servant activated");
         System.out.println("Bank application initialization successfully " + 
                 "finished");
     }
@@ -33,6 +46,10 @@ public class Server extends Ice.Application {
 
     @Override
     public int run(String[] args) {
+        System.out.print("Installing shutdown hook...");
+        System.out.flush();
+        setInterruptHook(new Thread(new ShutdownHook()));
+        System.out.println("done");
         setupBank();
         setupCommunicator();
         System.out.println("Initialization finished, server running.");
