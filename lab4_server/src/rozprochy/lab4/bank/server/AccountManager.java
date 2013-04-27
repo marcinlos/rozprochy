@@ -16,10 +16,14 @@ public class AccountManager {
 
         synchronized (lock) {
             if (accounts.containsKey(pesel)) {
+                System.out.printf("Account already exists (user=%s)\n", pesel);
                 throw new AccountAlreadyExists();
             } else {
                 AccountData account = new AccountData(pesel, 0);
                 accounts.put(pesel, account);
+                System.out.printf("Account created (user=%s, pwd=%s)\n", 
+                        pesel, password);
+                
             }
         }
     }

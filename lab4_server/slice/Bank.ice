@@ -21,14 +21,14 @@ module Bank {
     // Session exceptions
     exception SessionException extends BankException { };
     
-    exception InvalidSession extends OperationException { };
-    exception SessionExpired extends OperationException { };
+    exception InvalidSession extends SessionException { };
+    exception SessionExpired extends SessionException { };
 
 
     interface SystemManager {
         void createAccount(string pesel, string password) throws RegisterException;
         string login(string pesel, string password) throws LoginException;
-        string logout(string sessionId) throws SessionException;  
+        void logout(string sessionId) throws SessionException;  
     };
     
     
