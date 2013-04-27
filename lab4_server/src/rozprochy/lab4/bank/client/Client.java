@@ -32,7 +32,7 @@ public class Client extends Ice.Application {
     
     private Timer timer;
     
-    private static final int PING_PERIOD = 10000;
+    private static final int PING_PERIOD = 1500;
     
     
     @Override

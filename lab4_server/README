@@ -1,0 +1,4 @@
+Generate SSL keys first:
+    ./keygen bank_sv
+    ./keygen bank_cl
+(requires lab4_cert_signer project)
