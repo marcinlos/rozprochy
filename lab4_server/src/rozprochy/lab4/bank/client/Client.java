@@ -5,6 +5,7 @@ import java.util.NoSuchElementException;
 import java.util.Scanner;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.TimeUnit;
 
 import rozprochy.lab4.cli.Command;
 import rozprochy.lab4.cli.CommandInterpreter;
@@ -214,6 +215,41 @@ public class Client extends Ice.Application {
                         account.withdraw(amount);
                     } catch (NumberFormatException e) {
                         System.err.println("Usage: withdraw <amount>");
+                    } catch (NoSuchElementException e) {
+                        System.err.println("Usage: withdraw <amount>");
+                    } catch (SessionException e) {
+                        System.err.println("Invalid session"); 
+                    } catch (OperationException e) {
+                        System.out.println("Operation exception");
+                    }
+                }
+                return true;
+            }
+        });
+        cli.registerHandler("spam", new IceCommand() {
+            @Override 
+            public boolean doExecute(String cmd, Scanner input) {
+                if (checkLogged()) {
+                    try {
+                        int count = input.nextInt();
+                        int perSec = input.nextInt();
+                        if (perSec <= 0) {
+                            System.out.println("Error: nonpositive intensity");
+                            return true;
+                        } 
+                        int delay = 1000 / perSec;
+                        AccountPrx account = getAccount();
+                        try {
+                            while (-- count != 0) {
+                                // Deliberately almost-infinite when count <= 0
+                                TimeUnit.MILLISECONDS.sleep(delay);
+                                account.getBalance();
+                            }
+                        } catch (InterruptedException e) {
+                            System.out.println("Interrupted");
+                        }
+                    } catch (NumberFormatException e) {
+                        System.err.println("Usage: spam <count> <calls/s>");
                     } catch (NoSuchElementException e) {
                         System.err.println("Usage: withdraw <amount>");
                     } catch (SessionException e) {

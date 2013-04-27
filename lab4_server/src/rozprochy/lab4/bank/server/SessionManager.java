@@ -2,9 +2,11 @@ package rozprochy.lab4.bank.server;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import Bank.InvalidSession;
 import Bank.MultiLogin;
@@ -222,11 +224,12 @@ public class SessionManager {
             int examined = 0;
             int evicted = 0;
             synchronized (lock) {
-                for (Entry<String, Session> entry: sessions.entrySet()) {
+                Set<Session> sess = new HashSet<Session>(sessions.values());
+                for (Session session: sess) {
                     ++ examined;
-                    Session session = entry.getValue();
-                    if (removeIfExpired(session)) {
+                    if (expired(session)) {
                         ++ evicted;
+                        removeExpired(session);
                     }
                 }
             }

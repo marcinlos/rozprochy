@@ -2,6 +2,11 @@ package rozprochy.lab4.bank.server;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import Bank.InvalidSession;
 import Bank._AccountDisp;
@@ -17,17 +22,44 @@ public class RoundRobinLocator implements ServantLocator {
     private SessionManager sessions;
     private List<_AccountDisp> servants = new ArrayList<_AccountDisp>();
     
-    public RoundRobinLocator(SessionManager sessions) {
+    private Lock lock = new ReentrantLock();
+    private int nextIndex = 0;
+    
+    private LoadStats stats = new LoadStats();
+    
+    private Map<String, String> config;
+    private boolean logCalls = false;
+    
+    public RoundRobinLocator(SessionManager sessions, 
+            Map<String, String> config) {
         this.sessions = sessions;
+        this.config = config;
+        loadConfig();
         AccountImpl acc = new AccountImpl();
         servants.add(acc);
+        new Timer().scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                System.out.println("Calls/s: " + stats.callsPerSecond());
+            }
+        }, 1000, 1000);
         System.out.println("Servant locator created");
+    }
+    
+    private void loadConfig() {
+        String val = config.get("BankApp.Locator.Balanced.LogCalls");
+        if (val != null) {
+            logCalls = Boolean.valueOf(val);
+        }
+        System.out.println("Locator: log calls? " + (logCalls ? "yes" : "no"));
     }
 
     @Override
     public Object locate(Current curr, LocalObjectHolder cookie)
             throws UserException {
-        logRequest(curr);
+        if (logCalls) {
+            logRequest(curr);
+        }
         String session = curr.id.name;
         if (sessions.checkSessionActive(session)) {
             return getNext();
@@ -39,7 +71,9 @@ public class RoundRobinLocator implements ServantLocator {
     @Override
     public void finished(Current curr, Object servant, java.lang.Object cookie)
             throws UserException {
-        System.out.println("After request " + curr.requestId);
+        if (logCalls) {
+            System.out.println("After request " + curr.requestId);
+        }
     }
 
     @Override
@@ -48,8 +82,15 @@ public class RoundRobinLocator implements ServantLocator {
     }
     
     private synchronized _AccountDisp getNext() {
-        // TODO: Load balancing
-        return servants.get(0);
+        lock.lock();
+        try {
+            stats.called();
+            int idx = nextIndex;
+            nextIndex = (nextIndex + 1) % servants.size();
+            return servants.get(idx);
+        } finally {
+            lock.unlock();
+        }
     }
     
     private String idToString(Identity id) {

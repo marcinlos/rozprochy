@@ -15,9 +15,9 @@ public class AccountImpl extends _AccountDisp {
     @Override
     public int getBalance(Current __current) throws OperationException,
             SessionException {
-        printRequest(__current);
+        //printRequest(__current);
         // TODO Auto-generated method stub
-        System.out.println("AccountImpl.getBalance()");
+        //System.out.println("AccountImpl.getBalance()");
         return 0;
     }
 
@@ -26,7 +26,7 @@ public class AccountImpl extends _AccountDisp {
             throws OperationException, SessionException {
         printRequest(__current);
         // TODO Auto-generated method stub
-        System.out.println("AccountImpl.withdraw()");
+        //System.out.println("AccountImpl.withdraw()");
 
     }
 
@@ -35,7 +35,7 @@ public class AccountImpl extends _AccountDisp {
             throws OperationException, SessionException {
         printRequest(__current);
         // TODO Auto-generated method stub
-        System.out.println("AccountImpl.deposit()");
+        //System.out.println("AccountImpl.deposit()");
 
     }
     
