@@ -1,36 +1,45 @@
 package rozprochy.lab4.bank.server;
 
-import java.util.HashMap;
-import java.util.Map;
-
+import rozprochy.lab4.bank.util.Crypto;
+import Bank.AuthenticationFailed;
 import Bank.LoginException;
 import Bank.RegisterException;
 import Bank.SessionException;
 import Bank._SystemManagerDisp;
 import Ice.Current;
 import Ice.ObjectAdapter;
+import Ice.ServantLocator;
 
 public class SystemManagerImpl extends _SystemManagerDisp {
-    
-    private Map<String, Account> accounts = new HashMap<String, Account>();
+
+    private AccountManager accounts = new AccountManager();
     private SessionManager sessions = new SessionManager();
-    
+
     private ObjectAdapter adapter;
-    
+
     public SystemManagerImpl(ObjectAdapter adapter) {
         this.adapter = adapter;
+        ServantLocator locator = new RoundRobinLocator(sessions);
+        adapter.addServantLocator(locator, "");
     }
 
     @Override
-    public void createAccount(String pesel, String password,
+    public synchronized void createAccount(String pesel, String password,
             Current __current) throws RegisterException {
-        throw new RegisterException();
+        accounts.create(pesel, password);
     }
 
     @Override
-    public String login(String pesel, String password, Current __current)
-            throws LoginException {
-        throw new LoginException();
+    public synchronized String login(String pesel, String password,
+            Current __current) throws LoginException {
+        if (accounts.authenticate(pesel, password)) {
+            String sid = Crypto.createSessionId();
+            Session session = new Session(sid, pesel);
+            sessions.addSession(session);
+            return sid;
+        } else {
+            throw new AuthenticationFailed();
+        }
     }
 
     @Override

@@ -3,6 +3,7 @@ package rozprochy.lab4.bank.server;
 import java.util.ArrayList;
 import java.util.List;
 
+import Bank.InvalidSession;
 import Bank._AccountDisp;
 import Ice.Current;
 import Ice.LocalObjectHolder;
@@ -25,16 +26,17 @@ public class RoundRobinLocator implements ServantLocator {
             throws UserException {
         logRequest(curr);
         String session = curr.ctx.get("session");
-        if (sessions.sessionActive(session)) {
+        if (sessions.isSessionActive(session)) {
             return getNext();
+        } else {
+            throw new InvalidSession();
         }
-        return null;
     }
 
     @Override
     public void finished(Current curr, Object servant, java.lang.Object cookie)
             throws UserException {
-
+        System.out.println("After request " + curr.requestId);
     }
 
     @Override
