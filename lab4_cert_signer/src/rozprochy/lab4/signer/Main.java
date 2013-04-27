@@ -32,7 +32,7 @@ public class Main {
             ice = Ice.Util.initialize(args);
             Properties props = ice.getProperties();
             
-            Ice.ObjectPrx obj = ice.propertyToProxy("confcertsigner2013");
+            Ice.ObjectPrx obj = ice.propertyToProxy("Signer.Proxy");
             CertSignerPrx signer = CertSignerPrxHelper.checkedCast(obj);
             String surname = props.getProperty("User.Surname");
             String name = props.getProperty("User.Name");
@@ -62,7 +62,7 @@ public class Main {
         if (! path.endsWith(".csr")) {
             throw new InvalidNameException(csr.getName());
         }
-        String crtPath = path.substring(0, path.length() - 5) + ".crt";
+        String crtPath = path.substring(0, path.length() - 4) + ".crt";
         return new File(crtPath);
     }
     

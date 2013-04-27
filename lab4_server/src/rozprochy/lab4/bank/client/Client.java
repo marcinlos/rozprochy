@@ -32,7 +32,7 @@ public class Client extends Ice.Application {
     
     private Timer timer;
     
-    private static final int PING_PERIOD = 1000;
+    private static final int PING_PERIOD = 10000;
     
     
     @Override
@@ -41,8 +41,13 @@ public class Client extends Ice.Application {
         ObjectPrx obj = makePrx(managerName);
         System.out.print("Obtaining bank reference...");
         System.out.flush();
-        bank = SystemManagerPrxHelper.checkedCast(obj);
-        System.out.println("done");
+        try {
+            bank = SystemManagerPrxHelper.checkedCast(obj);
+            System.out.println("done");
+        } catch (Ice.ConnectionRefusedException e) {
+            System.out.println("\nConnection refused, is server running?");
+            return 1;
+        }
         setInterruptHook(new Thread(new ShutdownHook()));
         createPinger();
         try {
@@ -69,10 +74,11 @@ public class Client extends Ice.Application {
                 if (sessionId != null) {
                     try {
                         bank.keepalive(sessionId);
+                    } catch (Ice.ConnectFailedException e) {
+                        System.err.println("Connection failed: " + e.getMessage());
                     } catch (SessionException e) {
                         System.err.println("Pinger: session exception");
-                        e.printStackTrace(System.err);
-                    }
+                    } 
                 }
             }
         }, 0, PING_PERIOD);
@@ -100,11 +106,13 @@ public class Client extends Ice.Application {
         public boolean execute(String cmd, Scanner input) {
             try {
                 return doExecute(cmd, input);
+            } catch (Ice.ConnectFailedException e) {
+                System.err.println("Connection failed: " + e.getMessage());
             } catch (Ice.LocalException e) {
-                System.err.println("Connection problem");
+                System.err.println("Ice problem");
                 e.printStackTrace(System.err);
-                return true;
             }
+            return true;
         }
         
     }
@@ -221,7 +229,10 @@ public class Client extends Ice.Application {
     }
     
     private boolean checkLogged() {
-        if (sessionId == null) {
+        if (bank == null) {
+            System.err.println("Not connected!");
+            return false;
+        } else if (sessionId == null) {
             System.err.println("Not logged in!");
             return false;
         } else {

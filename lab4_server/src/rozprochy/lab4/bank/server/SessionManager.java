@@ -105,10 +105,15 @@ public class SessionManager {
     public void keepalive(String sid) throws SessionException {
         try {
             Session session = getSessionById(sid);
-            session.touch();
+            if (session != null) {
+                session.touch();
+            } else {
+                throw new InvalidSession();
+            }
             System.out.printf("Session ping (sid=%s)\n", sid);
         } catch (SessionException e) {
             System.out.printf("Session ping failed (sid=%s)\n", sid);
+            throw e;
         }
     }
     
@@ -120,8 +125,8 @@ public class SessionManager {
                 String pesel = session.getUser();
                 sessions.remove(sid);
                 logged.remove(pesel);
-                System.out.printf("Session terminated (user=%s, sid=%s), " + 
-                        "reason: %s\n", pesel, sid, reason.toString());
+                System.out.printf("Session terminated (user=%s, sid=%s)\n" + 
+                        "   reason: %s\n", pesel, sid, reason.toString());
                 informAboutRemoval(sid, reason);
                 return true;
             } else {
