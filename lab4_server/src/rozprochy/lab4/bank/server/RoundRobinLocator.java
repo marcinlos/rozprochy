@@ -30,17 +30,17 @@ public class RoundRobinLocator implements ServantLocator {
     private Map<String, String> config;
     private boolean logCalls = false;
     
-    public RoundRobinLocator(SessionManager sessions, 
+    public RoundRobinLocator(SessionManager sessions, AccountManager accounts,
             Map<String, String> config) {
         this.sessions = sessions;
         this.config = config;
         loadConfig();
-        AccountImpl acc = new AccountImpl();
+        AccountImpl acc = new AccountImpl(sessions, accounts);
         servants.add(acc);
         new Timer().scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
-                System.out.println("Calls/s: " + stats.callsPerSecond());
+                // System.out.println("Calls/s: " + stats.callsPerSecond());
             }
         }, 1000, 1000);
         System.out.println("Servant locator created");

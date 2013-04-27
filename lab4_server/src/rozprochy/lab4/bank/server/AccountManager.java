@@ -3,10 +3,15 @@ package rozprochy.lab4.bank.server;
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
+import java.util.concurrent.Semaphore;
 
+import rozprochy.lab4.bank.util.PESEL;
 import rozprochy.lab4.util.Crypto;
 import rozprochy.lab4.util.DiskMap;
 import Bank.AccountAlreadyExists;
+import Bank.EmptyPassword;
+import Bank.InvalidPesel;
+import Bank.RegisterException;
 
 public class AccountManager {
 
@@ -14,6 +19,9 @@ public class AccountManager {
     
     private String dir;
     private Map<String, AccountData> accounts;
+    
+    private Object lock = new Object();
+    private Semaphore dataLock = new Semaphore(1);
     
     public AccountManager(Map<String, String> config) {
         System.out.println("Initiating account manager");
@@ -34,11 +42,14 @@ public class AccountManager {
         System.out.println("Account manager activated");
     }
 
-    private Object lock = new Object();
 
     public void create(String pesel, String password)
-            throws AccountAlreadyExists {
-
+            throws RegisterException {
+        if (! PESEL.validate(pesel)) {
+            throw new InvalidPesel();
+        } else if (password.isEmpty()) {
+            throw new EmptyPassword();
+        }
         synchronized (lock) {
             if (accounts.containsKey(pesel)) {
                 System.out.printf("Account already exists (user=%s)\n", pesel);
@@ -51,17 +62,41 @@ public class AccountManager {
             }
         }
     }
+    
+    public AccountData lockAccount(String pesel) {
+        try {
+            dataLock.acquire();
+            synchronized (lock) {
+                return accounts.get(pesel);
+            }
+        } catch (InterruptedException e) {
+            System.err.println("Account manager interrupted");
+            throw new RuntimeException(e);
+        }
+    }
+    
+    public void unlockAccount(AccountData account) {
+        String pesel = account.getOwner();
+        if (accounts.containsKey(pesel)) {
+            accounts.put(pesel, account);
+        }
+        dataLock.release();
+    }
 
     public boolean authenticate(String pesel, String password) {
         synchronized (lock) {
-            AccountData account = accounts.get(pesel);
-            if (account != null) {
-                byte[] hashed = account.getHashed();
-                byte[] salt = account.getSalt();
-                byte[] value = Crypto.computeHash(password, salt);
-                return Crypto.compareDigests(hashed, value);
-            } else {
-                return false;
+            AccountData account = lockAccount(pesel);
+            try {
+                if (account != null) {
+                    byte[] hashed = account.getHashed();
+                    byte[] salt = account.getSalt();
+                    byte[] value = Crypto.computeHash(password, salt);
+                    return Crypto.compareDigests(hashed, value);
+                } else {
+                    return false;
+                }
+            } finally {
+                unlockAccount(account);
             }
         }
     }

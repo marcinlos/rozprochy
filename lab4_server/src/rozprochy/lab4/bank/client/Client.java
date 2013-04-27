@@ -12,6 +12,8 @@ import rozprochy.lab4.cli.CommandInterpreter;
 import Bank.AccountPrx;
 import Bank.AccountPrxHelper;
 import Bank.AuthenticationFailed;
+import Bank.EmptyPassword;
+import Bank.InvalidPesel;
 import Bank.LoginException;
 import Bank.MultiLogin;
 import Bank.OperationException;
@@ -53,7 +55,7 @@ public class Client extends Ice.Application {
         createPinger();
         try {
             repl();
-            timer.cancel();
+            exitGracefully();
         } catch (IOException e) {
             e.printStackTrace(System.err);
         }
@@ -129,8 +131,12 @@ public class Client extends Ice.Application {
                     System.out.println("Account successfully created");
                 } catch (NoSuchElementException e) {
                     System.err.println("Usage: register <pesel> <password>");
+                } catch (InvalidPesel e) {
+                    System.err.println("Invalid PESEL");
+                } catch (EmptyPassword e) {
+                    System.err.println("Empty password not allowed");
                 } catch (RegisterException e) {
-                    System.err.println(e.getMessage());
+                    e.printStackTrace(System.err);
                 }
                 return true;
             }
@@ -273,6 +279,17 @@ public class Client extends Ice.Application {
             return false;
         } else {
             return true;
+        }
+    }
+    
+    private void exitGracefully() {
+        timer.cancel();
+        if (sessionId != null) {
+            try {
+                bank.logout(sessionId);
+            } catch (SessionException e) {
+                System.err.println("Invalid session"); 
+            }
         }
     }
     

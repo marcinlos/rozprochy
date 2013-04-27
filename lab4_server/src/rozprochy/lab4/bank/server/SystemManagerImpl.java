@@ -26,7 +26,8 @@ public class SystemManagerImpl extends _SystemManagerDisp {
         this.adapter = adapter;
         accounts = new AccountManager(this.config);
         sessions = new SessionManager(this.config);
-        ServantLocator locator = new RoundRobinLocator(sessions, this.config);
+        ServantLocator locator = new RoundRobinLocator(sessions, 
+                accounts, this.config);
         this.adapter.addServantLocator(locator, "");
     }
 
