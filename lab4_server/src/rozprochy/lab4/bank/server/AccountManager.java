@@ -2,13 +2,19 @@ package rozprochy.lab4.bank.server;
 
 import java.io.File;
 import java.io.IOException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Map;
 
+import rozprochy.lab4.bank.util.Crypto;
 import rozprochy.lab4.util.DiskMap;
+import rozprochy.lab4.util.StringUtil;
 import Bank.AccountAlreadyExists;
 
 public class AccountManager {
 
+    private static final int SALT_BYTES = 32;
+    
     private String dir;
     private Map<String, AccountData> accounts;
     
@@ -41,11 +47,10 @@ public class AccountManager {
                 System.out.printf("Account already exists (user=%s)\n", pesel);
                 throw new AccountAlreadyExists();
             } else {
-                AccountData account = new AccountData(pesel, 0);
+                AccountData account = generateAccount(pesel, password);
                 accounts.put(pesel, account);
                 System.out.printf("Account created (user=%s, pwd=%s)\n", 
                         pesel, password);
-                
             }
         }
     }
@@ -54,12 +59,38 @@ public class AccountManager {
         synchronized (lock) {
             AccountData account = accounts.get(pesel);
             if (account != null) {
-                // TODO: Authenticate
+                byte[] hashed = account.getHashed();
+                byte[] salt = account.getSalt();
+                byte[] value = computeHash(password, salt);
+                for (int i = 0; i < value.length; ++ i) {
+                    if (hashed[i] != value[i]) {
+                        return false;
+                    }
+                }
                 return true;
             } else {
                 return false;
             }
         }
+    }
+    
+    private static byte[] computeHash(String password, byte[] salt) {
+        MessageDigest hasher;
+        try {
+            hasher = MessageDigest.getInstance("SHA-256");
+            hasher.update(salt);
+            hasher.update(StringUtil.encode(password));
+            return hasher.digest();
+        } catch (NoSuchAlgorithmException e) {
+            System.err.println("No SHA-256 provider available");
+            throw new RuntimeException(e);
+        }
+    }
+    
+    public AccountData generateAccount(String login, String password) {
+        byte[] salt = Crypto.randomBytes(SALT_BYTES);
+        byte[] hashed = computeHash(password, salt);
+        return new AccountData(login, 0, hashed, salt);
     }
 
 }
