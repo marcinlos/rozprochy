@@ -2,7 +2,7 @@ package rozprochy.lab4.bank.server;
 
 import java.util.Map;
 
-import rozprochy.lab4.bank.util.Crypto;
+import rozprochy.lab4.util.Crypto;
 import Bank.AuthenticationFailed;
 import Bank.LoginException;
 import Bank.RegisterException;

@@ -1,1 +1,0 @@
-yes -importcert -alias key -file /home/los/studia/rozprochy/lab4_server/pki/bank/bank_cl.crt -keystore /home/los/studia/rozprochy/lab4_server/pki/bank/bank_cl.jks -storepass ala123
