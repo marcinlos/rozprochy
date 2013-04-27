@@ -1,11 +1,11 @@
 package rozprochy.lab4.bank.server;
 
-public class Account {
+public class AccountData {
     
     private String owner;
     private int amount;
     
-    public Account(String owner, int amount) {
+    public AccountData(String owner, int amount) {
         this.owner = owner;
         this.amount = amount;
     }

@@ -18,6 +18,8 @@ public class RoundRobinLocator implements ServantLocator {
     
     public RoundRobinLocator(SessionManager sessions) {
         this.sessions = sessions;
+        AccountImpl acc = new AccountImpl();
+        servants.add(acc);
         System.out.println("Servant locator created");
     }
 

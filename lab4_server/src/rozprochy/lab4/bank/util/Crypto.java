@@ -10,7 +10,7 @@ public class Crypto {
     
     private static SecureRandom rng = new SecureRandom();
     
-    public static final int SESSION_ID_SIZE = 8;
+    public static final int SESSION_ID_SIZE = 16;
 
     public static byte[] randomBytes(int count) {
         byte[] bytes = new byte[count];

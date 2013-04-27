@@ -3,6 +3,7 @@ package rozprochy.lab4.bank.server;
 import java.util.HashMap;
 import java.util.Map;
 
+import Bank.InvalidSession;
 import Bank.MultiLogin;
 
 public class SessionManager {
@@ -36,6 +37,20 @@ public class SessionManager {
             }
             sessions.put(sid, session);
             logged.put(pesel, session);
+        }
+    }
+    
+    public boolean removeSession(String sid) throws InvalidSession {
+        synchronized (lock) {
+            Session session = sessions.get(sid);
+            if (session != null) {
+                String pesel = session.getUser();
+                sessions.remove(sid);
+                logged.remove(pesel);
+                return true;
+            } else {
+                throw new InvalidSession();
+            }
         }
     }
     

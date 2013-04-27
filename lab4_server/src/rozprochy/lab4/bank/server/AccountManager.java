@@ -7,7 +7,7 @@ import Bank.AccountAlreadyExists;
 
 public class AccountManager {
 
-    private Map<String, Account> accounts = new HashMap<String, Account>();
+    private Map<String, AccountData> accounts = new HashMap<String, AccountData>();
 
     private Object lock = new Object();
 
@@ -18,7 +18,7 @@ public class AccountManager {
             if (accounts.containsKey(pesel)) {
                 throw new AccountAlreadyExists();
             } else {
-                Account account = new Account(pesel, 0);
+                AccountData account = new AccountData(pesel, 0);
                 accounts.put(pesel, account);
             }
         }
@@ -26,7 +26,7 @@ public class AccountManager {
 
     public boolean authenticate(String pesel, String password) {
         synchronized (lock) {
-            Account account = accounts.get(pesel);
+            AccountData account = accounts.get(pesel);
             if (account != null) {
                 // TODO: Authenticate
                 return true;
