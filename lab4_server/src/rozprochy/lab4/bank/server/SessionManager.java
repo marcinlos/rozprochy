@@ -93,12 +93,22 @@ public class SessionManager {
         String sid = session.getId();
         String pesel = session.getUser();
         synchronized (lock) {
-            if (logged.containsKey(pesel)) {
+            if (isUserLogged(pesel)) {
                 throw new MultiLogin();
             }
             sessions.put(sid, session);
             logged.put(pesel, session);
             System.out.printf("New session (user=%s, sid=%s)\n", pesel, sid);
+        }
+    }
+    
+    public void keepalive(String sid) throws SessionException {
+        try {
+            Session session = getSessionById(sid);
+            session.touch();
+            System.out.printf("Session ping (sid=%s)\n", sid);
+        } catch (SessionException e) {
+            System.out.printf("Session ping failed (sid=%s)\n", sid);
         }
     }
     
@@ -165,7 +175,17 @@ public class SessionManager {
     
     public boolean isUserLogged(String pesel) {
         synchronized (lock) {
-            return logged.containsKey(pesel);
+            Session session = logged.get(pesel);
+            if (session != null) {
+                try {
+                    checkSessionActive(session.getId());
+                    return true;
+                } catch (SessionException e) {
+                    return false;
+                }
+            } else {
+                return false;
+            }
         }
     }
     

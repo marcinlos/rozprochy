@@ -3,6 +3,8 @@ package rozprochy.lab4.bank.client;
 import java.io.IOException;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import rozprochy.lab4.cli.Command;
 import rozprochy.lab4.cli.CommandInterpreter;
@@ -22,11 +24,15 @@ import Ice.Properties;
 public class Client extends Ice.Application {
 
     private SystemManagerPrx bank;
-    private String sessionId;
+    private volatile String sessionId;
     
     private String prefix;
     private String bankEndpoint;
     private String managerName;
+    
+    private Timer timer;
+    
+    private static final int PING_PERIOD = 1000;
     
     
     @Override
@@ -37,8 +43,11 @@ public class Client extends Ice.Application {
         System.out.flush();
         bank = SystemManagerPrxHelper.checkedCast(obj);
         System.out.println("done");
+        setInterruptHook(new Thread(new ShutdownHook()));
+        createPinger();
         try {
             repl();
+            timer.cancel();
         } catch (IOException e) {
             e.printStackTrace(System.err);
         }
@@ -50,6 +59,23 @@ public class Client extends Ice.Application {
         bankEndpoint = prop.getProperty("Bank.Endpoints");
         prefix = prop.getProperty("Bank.Prefix");
         managerName = prop.getProperty("Bank.Name");
+    }
+    
+    private void createPinger() {
+        timer = new Timer();
+        timer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                if (sessionId != null) {
+                    try {
+                        bank.keepalive(sessionId);
+                    } catch (SessionException e) {
+                        System.err.println("Pinger: session exception");
+                        e.printStackTrace(System.err);
+                    }
+                }
+            }
+        }, 0, PING_PERIOD);
     }
     
     private ObjectPrx makePrx(String name) {
@@ -202,6 +228,19 @@ public class Client extends Ice.Application {
             return true;
         }
     }
+    
+    private class ShutdownHook implements Runnable {
+        
+        @Override
+        public void run() {
+            System.out.print('\r');
+            System.out.flush();
+            timer.cancel();
+            communicator().destroy();
+        }
+        
+    }
+    
     
     public static void main(String[] args) {
         Client client = new Client();

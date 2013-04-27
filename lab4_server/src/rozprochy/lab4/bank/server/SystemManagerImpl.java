@@ -46,6 +46,7 @@ public class SystemManagerImpl extends _SystemManagerDisp {
             String sid = Crypto.createSessionId();
             Session session = new Session(sid, pesel);
             sessions.addSession(session);
+            System.out.printf("Logged in (user=%s, pwd=%s)\n", pesel, password);
             return sid;
         } else {
             System.out.printf("Authentication failed (user=%s, pwd=%s)\n", 
@@ -61,6 +62,12 @@ public class SystemManagerImpl extends _SystemManagerDisp {
         if (sessions.checkSessionActive(sessionId)) {
             sessions.removeSession(sessionId, RemovalReason.LOGGED_OUT);
         }
+    }
+
+    @Override
+    public void keepalive(String sessionId, Current __current)
+            throws SessionException {
+        sessions.keepalive(sessionId);
     }
 
 }
