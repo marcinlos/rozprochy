@@ -8,12 +8,13 @@ import java.util.Map.Entry;
 
 import Bank.InvalidSession;
 import Bank.MultiLogin;
+import Bank.SessionException;
 import Bank.SessionExpired;
 
 public class SessionManager {
 
-    private static final int EVICT_INTERVAL = 30000;
-    private static final int TIMEOUT = 10000;
+    private int evictionInterval;
+    private int sessionTimeout;
 
     // sid -> session
     private Map<String, Session> sessions = new HashMap<String, Session>();
@@ -22,13 +23,38 @@ public class SessionManager {
     
     private Object lock = new Object();
     
+    private Map<String, String> config;
     private Thread sessionEvictor;
     private List<SessionListener> listeners = new ArrayList<SessionListener>();
     
-    public SessionManager() {
+    public SessionManager(Map<String, String> config) {
         System.out.println("Initiating session manager");
+        this.config = config;
+        loadProperties();
         initEvictorDeamon();
         System.out.println("Session manager activated");
+    }
+    
+    private void loadProperties() {
+        System.out.println("Loading session manager properties");
+        evictionInterval = tryParseValue("BankApp.Session.EvictPeriod", 30000);
+        System.out.printf("   Eviction interval: %d ms\n", evictionInterval);
+        sessionTimeout = tryParseValue("BankApp.Session.Timeout", 5000);
+        System.out.printf("   Session timeout: %d ms\n", sessionTimeout);
+    }
+    
+    private int tryParseValue(String prop, int defaultValue) {
+        String val = config.get(prop);
+        if (val != null) {
+            try {
+                return Integer.valueOf(val);
+            } catch (NumberFormatException e) {
+                System.out.printf("   (invalid value '%s')'n", val);
+                return defaultValue;
+            }
+        } else {
+            return defaultValue;
+        }
     }
     
     public void addSessionListener(SessionListener listener) {
@@ -40,17 +66,26 @@ public class SessionManager {
     public Session getSessionById(String sid) throws SessionExpired {
         synchronized (lock) {
             Session session = sessions.get(sid);
+            if (session != null) {
+                if (! removeIfExpired(session)) {
+                    return session;
+                } else {
+                    throw new SessionExpired();
+                }
+            } else {
+                return null;
+            }
+        }
+    }
+    
+    public Session getSessionByUser(String pesel) throws SessionExpired {
+        synchronized (lock) {
+            Session session = logged.get(pesel);
             if (! removeIfExpired(session)) {
                 return session;
             } else {
                 throw new SessionExpired();
             }
-        }
-    }
-    
-    public Session getSessionByUser(String pesel) {
-        synchronized (lock) {
-            return logged.get(pesel);
         }
     }
     
@@ -96,7 +131,7 @@ public class SessionManager {
     
     private boolean expired(Session session) {
         long time = session.timeSinceUsed();
-        return time > TIMEOUT;
+        return time > sessionTimeout;
     }
     
     private void removeExpired(Session session) {
@@ -109,9 +144,8 @@ public class SessionManager {
             removeSession(sid, RemovalReason.EXPIRED);
         } catch (InvalidSession e) {
             // REALLY shouldn't happen
-            System.err.println("Internal error: session " +
-                    " removed while being examined by " + 
-                    "session evictor");
+            System.err.println("Internal error: session removed while " +
+                    "being examined by session evictor");
         }
     }
     
@@ -123,9 +157,9 @@ public class SessionManager {
         }
     }
     
-    public boolean isSessionActive(String sid) {
+    public boolean checkSessionActive(String sid) throws SessionExpired {
         synchronized (lock) {
-            return sessions.containsKey(sid);
+            return getSessionById(sid) != null;
         }
     }
     
@@ -137,7 +171,7 @@ public class SessionManager {
     
     private void initEvictorDeamon() {
         System.out.print("Initiating session evictor deamon...");
-        System.out.println("flush");
+        System.out.flush();
         sessionEvictor = new Thread(new SessionEvictor());
         sessionEvictor.setDaemon(true);
         sessionEvictor.start();
@@ -150,7 +184,7 @@ public class SessionManager {
         public void run() {
             try {
                 while (true) {
-                    Thread.sleep(EVICT_INTERVAL);
+                    Thread.sleep(evictionInterval);
                     runCheckPass();
                 }
             } catch (InterruptedException e) {
@@ -172,8 +206,8 @@ public class SessionManager {
                 }
             }
             System.out.println("Session evictor pass completed:");
-            System.out.printf("  %4d examined\n", examined);
-            System.out.printf("  %4d evicted\n", evicted);
+            System.out.printf("   %4d examined\n", examined);
+            System.out.printf("   %4d evicted\n", evicted);
         }
         
     }

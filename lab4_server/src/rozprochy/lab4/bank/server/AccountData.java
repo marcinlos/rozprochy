@@ -1,6 +1,8 @@
 package rozprochy.lab4.bank.server;
 
-public class AccountData {
+import java.io.Serializable;
+
+public class AccountData implements Serializable {
     
     private String owner;
     private int amount;

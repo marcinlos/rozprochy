@@ -29,7 +29,7 @@ public class RoundRobinLocator implements ServantLocator {
             throws UserException {
         logRequest(curr);
         String session = curr.id.name;
-        if (sessions.isSessionActive(session)) {
+        if (sessions.checkSessionActive(session)) {
             return getNext();
         } else {
             throw new InvalidSession();

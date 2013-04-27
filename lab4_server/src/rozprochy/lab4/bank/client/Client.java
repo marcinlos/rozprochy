@@ -1,6 +1,7 @@
 package rozprochy.lab4.bank.client;
 
 import java.io.IOException;
+import java.util.NoSuchElementException;
 import java.util.Scanner;
 
 import rozprochy.lab4.cli.Command;
@@ -86,11 +87,13 @@ public class Client extends Ice.Application {
         CommandInterpreter cli = new CommandInterpreter();
         cli.registerHandler("register", new IceCommand() {
             @Override public boolean doExecute(String cmd, Scanner input) {
-                String pesel = input.next();
-                String password = input.next();
                 try {
+                    String pesel = input.next();
+                    String password = input.next();
                     bank.createAccount(pesel, password);
                     System.out.println("Account successfully created");
+                } catch (NoSuchElementException e) {
+                    System.err.println("Usage: register <pesel> <password>");
                 } catch (RegisterException e) {
                     System.err.println(e.getMessage());
                 }
@@ -99,11 +102,13 @@ public class Client extends Ice.Application {
         });
         cli.registerHandler("login", new IceCommand() {
             @Override public boolean doExecute(String cmd, Scanner input) {
-                String pesel = input.next();
-                String password = input.next();
                 try {
+                    String pesel = input.next();
+                    String password = input.next();
                     sessionId = bank.login(pesel, password);
                     System.out.println("Logged in, sid=" + sessionId);
+                } catch (NoSuchElementException e) {
+                    System.err.println("Usage: login <pesel> <password>");
                 } catch (AuthenticationFailed e) {
                     System.err.println("Invalid login or password");
                 } catch (MultiLogin e) {
@@ -130,36 +135,72 @@ public class Client extends Ice.Application {
                 return true;
             }
         });
-        cli.registerHandler("get", new IceCommand() {
+        cli.registerHandler("balance", new IceCommand() {
             @Override public boolean doExecute(String cmd, Scanner input) {
-                if (sessionId != null) {
+                if (checkLogged()) {
                     try {
                         AccountPrx account = getAccount();
-                        account.getBalance();
-                        sessionId = null;
-                        System.out.println("Logged out");
+                        int balance = account.getBalance();
+                        System.out.printf("Account : %10d.00 $\n", balance);
                     } catch (SessionException e) {
                         System.err.println("Invalid session"); 
                     } catch (OperationException e) {
                         System.out.println("Operation exception");
                     }
-                } else {
-                    System.err.println("Not logged in!");
                 }
                 return true;
             }
         });
-        cli.registerHandler("", new IceCommand() {
+        cli.registerHandler("deposit", new IceCommand() {
             @Override public boolean doExecute(String cmd, Scanner input) {
+                if (checkLogged()) {
+                    try {
+                        int amount = input.nextInt();
+                        AccountPrx account = getAccount();
+                        account.deposit(amount);
+                    } catch (NumberFormatException e) {
+                        System.err.println("Usage: deposit <amount>");
+                    } catch (NoSuchElementException e) {
+                        System.err.println("Usage: deposit <amount>");
+                    } catch (SessionException e) {
+                        System.err.println("Invalid session"); 
+                    } catch (OperationException e) {
+                        System.out.println("Operation exception");
+                    }
+                }
                 return true;
             }
         });
-        cli.registerHandler("", new IceCommand() {
+        cli.registerHandler("withdraw", new IceCommand() {
             @Override public boolean doExecute(String cmd, Scanner input) {
+                if (checkLogged()) {
+                    try {
+                        int amount = input.nextInt();
+                        AccountPrx account = getAccount();
+                        account.withdraw(amount);
+                    } catch (NumberFormatException e) {
+                        System.err.println("Usage: withdraw <amount>");
+                    } catch (NoSuchElementException e) {
+                        System.err.println("Usage: withdraw <amount>");
+                    } catch (SessionException e) {
+                        System.err.println("Invalid session"); 
+                    } catch (OperationException e) {
+                        System.out.println("Operation exception");
+                    }
+                }
                 return true;
             }
         });
         cli.run();
+    }
+    
+    private boolean checkLogged() {
+        if (sessionId == null) {
+            System.err.println("Not logged in!");
+            return false;
+        } else {
+            return true;
+        }
     }
     
     public static void main(String[] args) {

@@ -1,7 +1,10 @@
 package rozprochy.lab4.server;
 
+import java.util.Map;
+
 import rozprochy.lab4.bank.server.SystemManagerImpl;
 import Ice.Identity;
+import Ice.Properties;
 
 public class Server extends Ice.Application {
     
@@ -27,11 +30,13 @@ public class Server extends Ice.Application {
     private void setupBank() {
         System.out.print("Creating bank adapter...");
         System.out.flush();
+        Properties props = communicator().getProperties();
+        Map<String, String> config = props.getPropertiesForPrefix("BankApp");
         Ice.ObjectAdapter adapter = communicator().createObjectAdapter("Bank");
         System.out.println("done");
         System.out.print("Activating system manager servant");
         System.out.flush();
-        SystemManagerImpl system = new SystemManagerImpl(adapter);
+        SystemManagerImpl system = new SystemManagerImpl(adapter, config);
         Identity id = communicator().stringToIdentity("Bank/Manager");
         adapter.add(system, id);
         adapter.activate();

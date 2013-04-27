@@ -1,5 +1,7 @@
 package rozprochy.lab4.bank.server;
 
+import java.util.Map;
+
 import rozprochy.lab4.bank.util.Crypto;
 import Bank.AuthenticationFailed;
 import Bank.LoginException;
@@ -12,15 +14,20 @@ import Ice.ServantLocator;
 
 public class SystemManagerImpl extends _SystemManagerDisp {
 
-    private AccountManager accounts = new AccountManager();
-    private SessionManager sessions = new SessionManager();
+    private AccountManager accounts;
+    private SessionManager sessions;
 
     private ObjectAdapter adapter;
+    private Map<String, String> config;
 
-    public SystemManagerImpl(ObjectAdapter adapter) {
+    public SystemManagerImpl(ObjectAdapter adapter, 
+            Map<String, String> config) {
+        this.config = config;
         this.adapter = adapter;
+        accounts = new AccountManager(this.config);
+        sessions = new SessionManager(this.config);
         ServantLocator locator = new RoundRobinLocator(sessions);
-        adapter.addServantLocator(locator, "");
+        this.adapter.addServantLocator(locator, "");
     }
 
     @Override
@@ -51,7 +58,9 @@ public class SystemManagerImpl extends _SystemManagerDisp {
     public void logout(String sessionId, Current __current)
             throws SessionException {
         System.out.printf("Logout (sid=%s)\n", sessionId);
-        sessions.removeSession(sessionId, RemovalReason.LOGGED_OUT);
+        if (sessions.checkSessionActive(sessionId)) {
+            sessions.removeSession(sessionId, RemovalReason.LOGGED_OUT);
+        }
     }
 
 }
