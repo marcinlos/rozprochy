@@ -32,7 +32,7 @@ public class Server extends Ice.Application {
         System.out.print("Activating system manager servant");
         System.out.flush();
         SystemManagerImpl system = new SystemManagerImpl(adapter);
-        Identity id = communicator().stringToIdentity("BankManager");
+        Identity id = communicator().stringToIdentity("Bank/Manager");
         adapter.add(system, id);
         adapter.activate();
         System.out.println("System manager servant activated");

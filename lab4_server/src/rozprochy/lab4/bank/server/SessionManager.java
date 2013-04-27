@@ -8,10 +8,11 @@ import java.util.Map.Entry;
 
 import Bank.InvalidSession;
 import Bank.MultiLogin;
+import Bank.SessionExpired;
 
 public class SessionManager {
 
-    private static final int EVICT_INTERVAL = 5000;
+    private static final int EVICT_INTERVAL = 30000;
     private static final int TIMEOUT = 10000;
 
     // sid -> session
@@ -36,9 +37,14 @@ public class SessionManager {
         }
     }
     
-    public Session getSessionById(String sid) {
+    public Session getSessionById(String sid) throws SessionExpired {
         synchronized (lock) {
-            return sessions.get(sid);
+            Session session = sessions.get(sid);
+            if (! removeIfExpired(session)) {
+                return session;
+            } else {
+                throw new SessionExpired();
+            }
         }
     }
     
@@ -76,6 +82,36 @@ public class SessionManager {
             } else {
                 throw new InvalidSession();
             }
+        }
+    }
+    
+    private boolean removeIfExpired(Session session) {
+        if (expired(session)) {
+            removeExpired(session);
+            return true;
+        } else {
+            return false;
+        }
+    }
+    
+    private boolean expired(Session session) {
+        long time = session.timeSinceUsed();
+        return time > TIMEOUT;
+    }
+    
+    private void removeExpired(Session session) {
+        long time = session.timeSinceUsed();
+        String sid = session.getId();
+        String user = session.getUser();
+        System.out.printf("Session (sid=%s, user=%s) " +
+                "timed out (%.2fs)\n", sid, user, time / 1000.0);
+        try {
+            removeSession(sid, RemovalReason.EXPIRED);
+        } catch (InvalidSession e) {
+            // REALLY shouldn't happen
+            System.err.println("Internal error: session " +
+                    " removed while being examined by " + 
+                    "session evictor");
         }
     }
     
@@ -130,21 +166,8 @@ public class SessionManager {
                 for (Entry<String, Session> entry: sessions.entrySet()) {
                     ++ examined;
                     Session session = entry.getValue();
-                    long time = session.timeSinceUsed();
-                    if (time > TIMEOUT) {
-                        String sid = session.getId();
-                        String user = session.getUser();
-                        System.out.printf("Session (sid=%s, user=%s) " +
-                                "timed out (%.2fs)\n", sid, user, time / 1000.0);
-                        try {
-                            removeSession(sid, RemovalReason.EXPIRED);
-                            ++ evicted;
-                        } catch (InvalidSession e) {
-                            // REALLY shouldn't happen
-                            System.err.println("Internal error: session " +
-                                    " removed while being examined by " + 
-                                    "session evictor");
-                        }
+                    if (removeIfExpired(session)) {
+                        ++ evicted;
                     }
                 }
             }

@@ -6,6 +6,7 @@ import java.util.List;
 import Bank.InvalidSession;
 import Bank._AccountDisp;
 import Ice.Current;
+import Ice.Identity;
 import Ice.LocalObjectHolder;
 import Ice.Object;
 import Ice.ServantLocator;
@@ -27,7 +28,7 @@ public class RoundRobinLocator implements ServantLocator {
     public Object locate(Current curr, LocalObjectHolder cookie)
             throws UserException {
         logRequest(curr);
-        String session = curr.ctx.get("session");
+        String session = curr.id.name;
         if (sessions.isSessionActive(session)) {
             return getNext();
         } else {
@@ -51,20 +52,21 @@ public class RoundRobinLocator implements ServantLocator {
         return servants.get(0);
     }
     
+    private String idToString(Identity id) {
+        return id.category + "/" + id.name;
+    }
+    
     private void logRequest(Current curr) {
         String adapter = curr.adapter.getName();
         int reqId = curr.requestId;
-        String category = curr.id.category;
-        String name = curr.id.name;
         String operation = curr.operation;
         String con = curr.con._toString();
         StringBuilder sb = new StringBuilder();
         sb.append("Adapter: ").append(adapter).append("\n")
           .append("Request ID: ").append(reqId).append("\n")
-          .append("Target: ").append(category).append(":").append(name)
-          .append("\n")
+          .append("Target: ").append(idToString(curr.id)).append("\n")
           .append("Operation: ").append(operation).append("\n")
-          .append("Connection: ").append(con).append("\n");
+          .append("Connection:\n").append(con).append("\n");
         System.out.println(sb.toString());
     }
 
