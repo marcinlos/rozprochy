@@ -3,8 +3,8 @@ SHELL = /bin/sh
 prefix = .
 exec_prefix = ${prefix}
 srcdir = ${prefix}/src
-icedir = ${srcdir}/slice
-gendir = ${srcdir}/generated
+icedir = ${prefix}/slice
+gendir = ${prefix}/generated
 bindir = ${exec_prefix}/bin
 
 vpath %.cpp ${srcdir} 
@@ -24,10 +24,10 @@ SLICE = slice2cpp
 
 PROGRAMS = client
 
-client_SRCS = main.cpp Client.cpp DIIParser.cpp
+client_SRCS = main.cpp Client.cpp
 
 all_LDFLAGS = -L${ICE_HOME}/lib64 -lIce -lIceUtil -lpthread
-SLICES = Testbed.ice
+SLICES = Bank.ice
 
 CXXFLAGS=-I${ICE_HOME}/include
 

@@ -18,7 +18,7 @@ SLICE = slice2cpp
 # Hack so ugly it fuckin' hurts :/
 # Ice still doesn't work with gcc 4.7
 # Don't have time to take a closer look rigth now
-CXX = g++-4.6
+#CXX = g++-4.6
 
 
 # Insert your program definition(s) here
@@ -32,7 +32,8 @@ PROGRAMS = server client
 server_SRCS = server.cpp
 client_SRCS = client.cpp
 
-all_LDFLAGS = -lIce -lIceUtil
+CPPFLAGS = -I${ICE_HOME}/include 
+all_LDFLAGS = -L${ICE_HOME}/lib64 -lIce -lIceUtil -lpthread
 SLICES = Printer.ice
 
 # End of program definitions 
@@ -66,10 +67,10 @@ ${EXECS}: ${bindir}/%: $${$$*_OBJS} ${ICE_OBJS}
 	${CXX} -o $@ $^ ${all_LDFLAGS} ${$*_LDFLAGS}
 
 ${OBJS}: ${bindir}/%.o: %.cpp | ${bindir} ${ICE_SRCS}
-	${CXX} ${CFLAGS} -c -o $@ $^
+	${CXX} ${CPPFLAGS} -c -o $@ $^
 	
 ${ICE_OBJS}: ${bindir}/%.o: ${gendir}/%.cpp | ${bindir}
-	${CXX} ${CFLAGS} -I${gendir} -c -o $@ $^
+	${CXX} ${CPPFLAGS} -I${gendir} -c -o $@ $^
 	
 ${ICE_SRCS}: ${gendir}/%.cpp: ${icedir}/%.ice | ${gendir}
 	${SLICE} --output-dir ${gendir} $^
