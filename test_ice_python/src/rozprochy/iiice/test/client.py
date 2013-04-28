@@ -1,8 +1,10 @@
 
 import Ice, sys, traceback
 from rozprochy.iiice.test import PrinterPrx
-try: from Printer_ice import PrinterPrx
-except: pass
+try: 
+    from Printer_ice import PrinterPrx
+except: 
+    pass
 
 
 if __name__ == '__main__':
