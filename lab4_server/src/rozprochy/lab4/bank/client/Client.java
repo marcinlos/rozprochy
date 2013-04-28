@@ -35,6 +35,12 @@ public class Client extends Ice.Application {
     
     private Timer timer;
     
+    private String prompt = "> ";
+    
+    private static final char[] BUSY = {
+        '-', '\\', '|', '/', '-', '\\', '|', '/' 
+    };
+    
     private static final int PING_PERIOD = 1500;
     
     
@@ -120,6 +126,11 @@ public class Client extends Ice.Application {
         
     }
     
+    private void printPrompt() {
+        System.out.print(prompt);
+        System.out.flush();
+    }
+    
     private void repl() throws IOException {
         CommandInterpreter cli = new CommandInterpreter();
         cli.registerHandler("register", new IceCommand() {
@@ -138,6 +149,7 @@ public class Client extends Ice.Application {
                 } catch (RegisterException e) {
                     e.printStackTrace(System.err);
                 }
+                printPrompt();
                 return true;
             }
         });
@@ -157,6 +169,7 @@ public class Client extends Ice.Application {
                 } catch (LoginException e) {
                     e.printStackTrace(System.err);
                 }
+                printPrompt();
                 return true;
             }
         });
@@ -173,6 +186,7 @@ public class Client extends Ice.Application {
                 } else {
                     System.err.println("Not logged in!");
                 }
+                printPrompt();
                 return true;
             }
         });
@@ -185,10 +199,12 @@ public class Client extends Ice.Application {
                         System.out.printf("Account : %10d.00 $\n", balance);
                     } catch (SessionException e) {
                         System.err.println("Invalid session"); 
+                        e.printStackTrace(System.err);
                     } catch (OperationException e) {
                         System.out.println("Operation exception");
                     }
                 }
+                printPrompt();
                 return true;
             }
         });
@@ -209,6 +225,7 @@ public class Client extends Ice.Application {
                         System.out.println("Operation exception");
                     }
                 }
+                printPrompt();
                 return true;
             }
         });
@@ -229,6 +246,7 @@ public class Client extends Ice.Application {
                         System.out.println("Operation exception");
                     }
                 }
+                printPrompt();
                 return true;
             }
         });
@@ -244,13 +262,30 @@ public class Client extends Ice.Application {
                             return true;
                         } 
                         int delay = 1000 / perSec;
+                        long begin = System.currentTimeMillis();
+                        int n = 0;
                         AccountPrx account = getAccount();
+                        int remaining = count;
                         try {
-                            while (-- count != 0) {
+                            while (-- remaining != 0) {
                                 // Deliberately almost-infinite when count <= 0
                                 TimeUnit.MILLISECONDS.sleep(delay);
                                 account.getBalance();
+                                long now = System.currentTimeMillis();
+                                if (now - begin > 100) {
+                                    begin = now;
+                                    if (remaining < 0) {
+                                        n = (n + 1) % BUSY.length;
+                                        System.out.print("\rSpamming... " + BUSY[n]);
+                                    } else {
+                                        double done = count - remaining;
+                                        double p = done / count * 100;
+                                        System.out.printf("\rSpamming... %3.0f%%", p);
+                                    }
+                                    System.out.flush();
+                                }
                             }
+                            System.out.println("\rSpamming finished");
                         } catch (InterruptedException e) {
                             System.out.println("Interrupted");
                         }
@@ -264,9 +299,11 @@ public class Client extends Ice.Application {
                         System.out.println("Operation exception");
                     }
                 }
+                printPrompt();
                 return true;
             }
         });
+        printPrompt();
         cli.run();
     }
     
@@ -283,6 +320,8 @@ public class Client extends Ice.Application {
     }
     
     private void exitGracefully() {
+        System.out.print('\r');
+        System.out.flush();
         timer.cancel();
         if (sessionId != null) {
             try {

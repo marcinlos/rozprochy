@@ -30,7 +30,7 @@ public class AccountManager {
             if (dir == null) {
                 System.err.println("Warning: account storage directory " +
                         "not specified, using default");
-                dir = ".data";
+                dir = ".bankdb";
             }
             accounts = new DiskMap<AccountData>(new File(dir));
             System.out.println("Initialized storage in " + dir);
@@ -67,7 +67,11 @@ public class AccountManager {
         try {
             dataLock.acquire();
             synchronized (lock) {
-                return accounts.get(pesel);
+                AccountData acc = accounts.get(pesel);
+                if (acc == null) {
+                    dataLock.release();
+                }
+                return acc;
             }
         } catch (InterruptedException e) {
             System.err.println("Account manager interrupted");
@@ -86,17 +90,17 @@ public class AccountManager {
     public boolean authenticate(String pesel, String password) {
         synchronized (lock) {
             AccountData account = lockAccount(pesel);
-            try {
-                if (account != null) {
+            if (account != null) {
+                try {
                     byte[] hashed = account.getHashed();
                     byte[] salt = account.getSalt();
                     byte[] value = Crypto.computeHash(password, salt);
                     return Crypto.compareDigests(hashed, value);
-                } else {
-                    return false;
+                } finally {
+                    unlockAccount(account);
                 }
-            } finally {
-                unlockAccount(account);
+            } else {
+                return false;
             }
         }
     }

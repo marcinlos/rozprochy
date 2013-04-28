@@ -8,8 +8,8 @@ import Ice.Current;
 
 public class AccountImpl extends _AccountDisp {
 
-    private SessionManager sessions;
-    private AccountManager accounts;
+    protected SessionManager sessions;
+    protected AccountManager accounts;
     
     public AccountImpl(SessionManager sessions, AccountManager accounts) {
         this.sessions = sessions;
@@ -19,7 +19,7 @@ public class AccountImpl extends _AccountDisp {
     @Override
     public int getBalance(Current __current) throws OperationException,
             SessionException {
-        printRequest(__current);
+        //printRequest(__current);
         //System.out.println("AccountImpl.getBalance()");
         AccountData acc = getAccount(__current.id.name);
         int balance = acc.getAmount();
@@ -30,7 +30,7 @@ public class AccountImpl extends _AccountDisp {
     @Override
     public void withdraw(int amount, Current __current)
             throws OperationException, SessionException {
-        printRequest(__current);
+        //printRequest(__current);
         //System.out.println("AccountImpl.withdraw()");
         AccountData acc = getAccount(__current.id.name);
         acc.withdraw(amount);
@@ -40,7 +40,7 @@ public class AccountImpl extends _AccountDisp {
     @Override
     public void deposit(int amount, Current __current)
             throws OperationException, SessionException {
-        printRequest(__current);
+        //printRequest(__current);
         //System.out.println("AccountImpl.deposit()");
         AccountData acc = getAccount(__current.id.name);
         acc.deposit(amount);

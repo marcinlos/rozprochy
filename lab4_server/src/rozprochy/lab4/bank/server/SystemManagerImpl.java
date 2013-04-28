@@ -26,9 +26,19 @@ public class SystemManagerImpl extends _SystemManagerDisp {
         this.adapter = adapter;
         accounts = new AccountManager(this.config);
         sessions = new SessionManager(this.config);
-        ServantLocator locator = new RoundRobinLocator(sessions, 
-                accounts, this.config);
-        this.adapter.addServantLocator(locator, "");
+        String locatorType = config.get("BankApp.Locator");
+        if (locatorType == null) {
+            System.out.println("Locator type unspecified, using default");
+        }
+        try {
+            ServantLocator locator = LocatorFactory.newInstance(locatorType, 
+                    sessions, accounts, config);
+            this.adapter.addServantLocator(locator, "");
+            System.out.println("Created locator '" + locatorType + "'");
+        } catch (UnknownLocatorType e) {
+            System.err.println("Unknown locator type: '" + locatorType + "'");
+            throw new RuntimeException(e);
+        }
     }
 
     @Override

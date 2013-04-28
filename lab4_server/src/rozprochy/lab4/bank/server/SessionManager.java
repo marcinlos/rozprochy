@@ -37,7 +37,7 @@ public class SessionManager {
     }
     
     private void loadProperties() {
-        System.out.println("Loading session manager properties");
+        System.out.println("Loading session manager configuration");
         evictionInterval = tryParseValue("BankApp.Session.EvictPeriod", 30000);
         System.out.printf("   Eviction interval: %d ms\n", evictionInterval);
         sessionTimeout = tryParseValue("BankApp.Session.Timeout", 5000);
