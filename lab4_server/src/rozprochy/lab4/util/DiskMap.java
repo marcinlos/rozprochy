@@ -22,7 +22,7 @@ import java.util.Set;
 
 public class DiskMap<T extends Serializable> extends AbstractMap<String, T> {
 
-    private static final String KEY_FILE = "keys.txt";
+    private static final String KEY_FILE = "keys";
 
     private File baseDir;
     private File keysFile;
@@ -31,6 +31,7 @@ public class DiskMap<T extends Serializable> extends AbstractMap<String, T> {
         this.baseDir = directory;
         this.keysFile = new File(directory, KEY_FILE);
         baseDir.mkdir();
+        keysFile.getParentFile().mkdirs();
         keysFile.createNewFile();
     }
 

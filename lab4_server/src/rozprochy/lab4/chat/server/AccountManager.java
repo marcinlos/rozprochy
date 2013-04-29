@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 
-import rozprochy.lab4.bank.util.PESEL;
 import rozprochy.lab4.generic.AccountPersistor;
 import rozprochy.lab4.generic.DiskMapPersistor;
 import Users.InvalidLogin;
@@ -17,11 +16,11 @@ public class AccountManager extends
         super(prefix);
         System.out.println(prefix() + "Initiating account manager");
         try {
-            String dir = config.get("BankApp.Accounts.Dir");
+            String dir = config.get("ChatApp.Accounts.Dir");
             if (dir == null) {
                 System.err.println(prefix() + "Warning: account storage " +
                         "directory not specified, using default");
-                dir = ".bankdb";
+                dir = ".chatdb/accounts";
             }
             AccountPersistor<ChatAccountData >accounts = 
                     new DiskMapPersistor<ChatAccountData>(new File(dir));
@@ -38,9 +37,7 @@ public class AccountManager extends
     
     @Override
     protected void validateLogin(String login) throws InvalidLogin {
-        if (! PESEL.validate(login)) {
-            throw new InvalidLogin("Not a valid PESEL");
-        }
+        // empty?
     }
     
     @Override

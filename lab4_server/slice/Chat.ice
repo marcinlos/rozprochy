@@ -22,9 +22,12 @@ module Chat {
 
 
     exception ChatException { };
+    
+    exception NeedForRecovery extends ChatException { };
 
 
     sequence<string> Rooms;
+    interface Member;
 
     interface SystemManager {
         void createAccount(string username, string password) 
@@ -33,7 +36,11 @@ module Chat {
         string login(string username, string password) 
             throws Users::LoginException, Users::DbError;
             
-        void keepalive(string sessionId) throws Users::SessionException;
+        void setCallback(string sessionId, Member* callback) throws
+            Users::SessionException;
+            
+        void keepalive(string sessionId) throws Users::SessionException, 
+            NeedForRecovery;
         
         void logout(string sessionId) throws Users::SessionException;  
         
@@ -53,11 +60,12 @@ module Chat {
     exception NotAMember extends ChatException { };
     
     interface Member {
+        void greet(string greeting);
         void keepalive();
         void newMessage(Message msg);
         void newMultipleMessages(Messages msgs);
-        void userJoined(string login);
-        void userLeaved(string login);
+        void userJoined(string room, string login);
+        void userLeaved(string room, string login);
     };
     
     interface Room {

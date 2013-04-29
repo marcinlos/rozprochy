@@ -6,9 +6,13 @@ import rozprochy.lab4.bank.server.SessionManager;
 import rozprochy.lab4.generic.RemovalReason;
 import rozprochy.lab4.generic.Session;
 import rozprochy.lab4.util.Crypto;
+import Chat.MemberPrx;
+import Chat.MemberPrxHelper;
 import Chat._SystemManagerDisp;
 import Ice.Current;
+import Ice.Identity;
 import Ice.ObjectAdapter;
+import Ice.ObjectPrx;
 import Users.AuthenticationFailed;
 import Users.DbError;
 import Users.LoginException;
@@ -29,7 +33,7 @@ public class ChatSystemManager extends _SystemManagerDisp {
             Map<String, String> config) {
         this.config = config;
         this.adapter = adapter;
-        accounts = new AccountManager("Bank", this.config);
+        accounts = new AccountManager("Chat", this.config);
         sessions = new SessionManager(this.config);
         /*String locatorType = config.get("BankApp.Locator");
         if (locatorType == null) {
@@ -47,28 +51,28 @@ public class ChatSystemManager extends _SystemManagerDisp {
     }
 
     @Override
-    public synchronized void createAccount(String pesel, String password,
+    public synchronized void createAccount(String login, String password,
             Current __current) throws RegisterException, DbError {
-        System.out.printf(PREFIX + "Account creation attempt (user=%s, pwd=%s)\n", 
-                pesel, password);
-        accounts.create(pesel, password, null);
+        System.out.printf("%sAccount creation attempt (user=%s, pwd=%s)\n", 
+                PREFIX, login, password);
+        accounts.create(login, password, null);
     }
 
     @Override
-    public synchronized String login(String pesel, String password,
+    public synchronized String login(String login, String password,
             Current __current) throws LoginException, DbError {
         System.out.printf("PREFIX + Login attempt (user=%s, pwd=%s)\n", 
-                pesel, password);
-        if (accounts.authenticate(pesel, password)) {
+                login, password);
+        if (accounts.authenticate(login, password)) {
             String sid = Crypto.createSessionId();
-            Session session = new Session(sid, pesel);
+            Session session = new Session(sid, login);
             sessions.addSession(session);
-            System.out.printf(PREFIX + "Logged in (user=%s, pwd=%s)\n", pesel, 
+            System.out.printf("%sLogged in (user=%s, pwd=%s)\n", PREFIX, login, 
                     password);
             return sid;
         } else {
-            System.out.printf(PREFIX + "Authentication failed (user=%s, "  +
-                    "pwd=%s)\n", pesel, password);
+            System.out.printf("%sAuthentication failed (user=%s, pwd=%s)\n", 
+                    PREFIX, login, password);
             throw new AuthenticationFailed();
         }
     }
@@ -76,7 +80,7 @@ public class ChatSystemManager extends _SystemManagerDisp {
     @Override
     public void logout(String sessionId, Current __current)
             throws SessionException {
-        System.out.printf(PREFIX + "Logout (sid=%s)\n", sessionId);
+        System.out.printf("%sLogout (sid=%s)\n", PREFIX, sessionId);
         if (sessions.checkSessionActive(sessionId)) {
             sessions.removeSession(sessionId, RemovalReason.LOGGED_OUT);
         }
@@ -92,6 +96,16 @@ public class ChatSystemManager extends _SystemManagerDisp {
     public String[] getRooms(String sessionId, Current __current)
             throws SessionException {
         return new String[] { "Aleph", "Beth", "Gimmel" };
+    }
+
+    @Override
+    public void setCallback(String sessionId, MemberPrx callback,
+            Current __current) throws SessionException {
+        // Create callback proxy
+        Identity id = callback.ice_getIdentity();
+        ObjectPrx obj = __current.con.createProxy(id);
+        MemberPrx cb = MemberPrxHelper.uncheckedCast(obj);
+        cb.greet("Welcomeeeee");
     }
 
 }
