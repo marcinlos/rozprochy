@@ -7,6 +7,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import rozprochy.lab4.generic.RemovalReason;
+import rozprochy.lab4.generic.Session;
+import rozprochy.lab4.generic.SessionListener;
+
 import Users.InvalidSession;
 import Users.MultiLogin;
 import Users.SessionException;

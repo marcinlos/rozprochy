@@ -1,21 +1,21 @@
-package rozprochy.lab4.bank.server;
+package rozprochy.lab4.chat.server;
 
 import java.util.Map;
 
+import rozprochy.lab4.bank.server.SessionManager;
 import rozprochy.lab4.generic.RemovalReason;
 import rozprochy.lab4.generic.Session;
 import rozprochy.lab4.util.Crypto;
-import Bank._SystemManagerDisp;
+import Chat._SystemManagerDisp;
 import Ice.Current;
 import Ice.ObjectAdapter;
-import Ice.ServantLocator;
 import Users.AuthenticationFailed;
 import Users.DbError;
 import Users.LoginException;
 import Users.RegisterException;
 import Users.SessionException;
 
-public class SystemManagerImpl extends _SystemManagerDisp {
+public class ChatSystemManager extends _SystemManagerDisp {
 
     private AccountManager accounts;
     private SessionManager sessions;
@@ -23,29 +23,27 @@ public class SystemManagerImpl extends _SystemManagerDisp {
     private ObjectAdapter adapter;
     private Map<String, String> config;
     
-    private static final String PREFIX = "[Bank] ";
+    private static final String PREFIX = "[Chat] ";
 
-    public SystemManagerImpl(ObjectAdapter adapter, 
+    public ChatSystemManager(ObjectAdapter adapter, 
             Map<String, String> config) {
         this.config = config;
         this.adapter = adapter;
         accounts = new AccountManager("Bank", this.config);
         sessions = new SessionManager(this.config);
-        String locatorType = config.get("BankApp.Locator");
+        /*String locatorType = config.get("BankApp.Locator");
         if (locatorType == null) {
-            System.out.println(PREFIX + "Locator type unspecified, " +
-                    "using default");
+            System.out.println("Locator type unspecified, using default");
         }
         try {
             ServantLocator locator = LocatorFactory.newInstance(locatorType, 
                     sessions, accounts, config);
             this.adapter.addServantLocator(locator, "");
-            System.out.println(PREFIX + "Created locator '" + locatorType + "'");
+            System.out.println("Created locator '" + locatorType + "'");
         } catch (UnknownLocatorType e) {
-            System.err.println(PREFIX + "Unknown locator type: '" + 
-                    locatorType + "'");
+            System.err.println("Unknown locator type: '" + locatorType + "'");
             throw new RuntimeException(e);
-        }
+        }*/
     }
 
     @Override
@@ -88,6 +86,12 @@ public class SystemManagerImpl extends _SystemManagerDisp {
     public void keepalive(String sessionId, Current __current)
             throws SessionException {
         sessions.keepalive(sessionId);
+    }
+
+    @Override
+    public String[] getRooms(String sessionId, Current __current)
+            throws SessionException {
+        return new String[] { "Aleph", "Beth", "Gimmel" };
     }
 
 }

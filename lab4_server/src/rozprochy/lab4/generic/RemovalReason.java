@@ -1,4 +1,4 @@
-package rozprochy.lab4.bank.server;
+package rozprochy.lab4.generic;
 
 /**
  * Enumeration of reasons why was the session removed.

@@ -27,11 +27,11 @@ module Chat {
     sequence<string> Rooms;
 
     interface SystemManager {
-        void createAccount(string pesel, string password) 
-            throws Users::RegisterException;
+        void createAccount(string username, string password) 
+            throws Users::RegisterException, Users::DbError;
             
-        string login(string pesel, string password) 
-            throws Users::LoginException;
+        string login(string username, string password) 
+            throws Users::LoginException, Users::DbError;
             
         void keepalive(string sessionId) throws Users::SessionException;
         
@@ -42,6 +42,7 @@ module Chat {
 
     struct Message {
         long id;
+        long timestamp;
         string room;
         string author;
         string content;

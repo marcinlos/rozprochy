@@ -1,4 +1,4 @@
-package rozprochy.lab4.bank.server;
+package rozprochy.lab4.generic;
 
 /**
  * Interface for obtaining notifications about session events. Main purpose

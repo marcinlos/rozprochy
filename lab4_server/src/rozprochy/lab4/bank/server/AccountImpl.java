@@ -1,5 +1,6 @@
 package rozprochy.lab4.bank.server;
 
+import rozprochy.lab4.generic.Session;
 import Bank.OperationException;
 import Bank._AccountDisp;
 import Ice.Current;
@@ -48,6 +49,7 @@ public class AccountImpl extends _AccountDisp {
         freeAccount(acc);
     }
     
+    @SuppressWarnings("unused")
     private static void printRequest(Current curr) {
         StringBuilder sb = new StringBuilder();
         sb.append("Working as " + curr.id.name);

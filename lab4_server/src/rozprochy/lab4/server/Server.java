@@ -34,19 +34,29 @@ public class Server extends Ice.Application {
         Map<String, String> config = props.getPropertiesForPrefix("BankApp");
         Ice.ObjectAdapter adapter = communicator().createObjectAdapter("Bank");
         System.out.println("done");
-        System.out.print("Activating system manager servant");
-        System.out.flush();
+        System.out.println("Activating bank servant");
         SystemManagerImpl system = new SystemManagerImpl(adapter, config);
         Identity id = communicator().stringToIdentity("Bank/Manager");
         adapter.add(system, id);
         adapter.activate();
-        System.out.println("System manager servant activated");
+        System.out.println("Bank servant activated");
         System.out.println("Bank application initialization successfully " + 
                 "finished");
     }
     
-    private void setupCommunicator() {
-        
+    private void setupChat() {
+        System.out.print("Creating chat adapter...");
+        System.out.flush();
+        Properties props = communicator().getProperties();
+        Map<String, String> config = props.getPropertiesForPrefix("ChatApp");
+        Ice.ObjectAdapter adapter = communicator().createObjectAdapter("Chat");
+        System.out.println("done");
+        System.out.println("Activating chat servant");
+
+        adapter.activate();
+        System.out.println("Chat servant activated");
+        System.out.println("Chat application initialization successfully " + 
+                "finished");
     }
 
     @Override
@@ -56,7 +66,7 @@ public class Server extends Ice.Application {
         setInterruptHook(new Thread(new ShutdownHook()));
         System.out.println("done");
         setupBank();
-        setupCommunicator();
+        setupChat();
         System.out.println("Initialization finished, server running.");
         communicator().waitForShutdown();
         return 0;

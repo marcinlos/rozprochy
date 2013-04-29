@@ -1,4 +1,4 @@
-package rozprochy.lab4.bank.server;
+package rozprochy.lab4.chat.server;
 
 import java.io.File;
 import java.io.IOException;
@@ -11,7 +11,7 @@ import Users.InvalidLogin;
 import Users.InvalidPassword;
 
 public class AccountManager extends
-        rozprochy.lab4.generic.AccountManager<AccountData> {
+        rozprochy.lab4.generic.AccountManager<ChatAccountData> {
 
     public AccountManager(String prefix, Map<String, String> config) {
         super(prefix);
@@ -23,8 +23,8 @@ public class AccountManager extends
                         "directory not specified, using default");
                 dir = ".bankdb";
             }
-            AccountPersistor<AccountData >accounts = 
-                    new DiskMapPersistor<AccountData>(new File(dir));
+            AccountPersistor<ChatAccountData >accounts = 
+                    new DiskMapPersistor<ChatAccountData>(new File(dir));
             System.out.println(prefix() + "Initialized storage in " + dir);
             System.out.printf(prefix() + "   Found %d account(s)\n", 
                     accounts.size());
@@ -51,9 +51,9 @@ public class AccountManager extends
     }
 
     @Override
-    protected AccountData buildAccount(String login, byte[] salt,
+    protected ChatAccountData buildAccount(String login, byte[] salt,
             byte[] hashedPassword, Object extra) {
-        return new AccountData(login, 0, hashedPassword, salt);
+        return new ChatAccountData(login, hashedPassword, salt);
     }
 
 }

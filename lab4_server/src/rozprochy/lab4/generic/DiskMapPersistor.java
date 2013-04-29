@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import rozprochy.lab4.bank.server.AccountData;
 import rozprochy.lab4.util.DiskMap;
 import rozprochy.lab4.util.IOExceptionWrapper;
 

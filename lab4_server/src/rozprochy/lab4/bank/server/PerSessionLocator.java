@@ -5,6 +5,10 @@ import java.util.Map;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import rozprochy.lab4.generic.RemovalReason;
+import rozprochy.lab4.generic.Session;
+import rozprochy.lab4.generic.SessionListener;
+
 import Bank._AccountDisp;
 import Ice.Current;
 import Ice.LocalObjectHolder;
@@ -18,7 +22,7 @@ public class PerSessionLocator implements ServantLocator {
     private SessionManager sessions;
     private AccountManager accounts;
     
-    private Map<String, String> config;
+    //private Map<String, String> config;
     
     private Lock lock = new ReentrantLock();
     private Map<String, _AccountDisp> servantMap = 
@@ -28,7 +32,7 @@ public class PerSessionLocator implements ServantLocator {
             Map<String, String> config) {
         this.sessions = sessions;
         this.accounts = accounts;
-        this.config = config;
+        //this.config = config;
         sessions.addSessionListener(new SessionListener() {
             @Override
             public void sessionRemoved(String sid, RemovalReason reason) {
