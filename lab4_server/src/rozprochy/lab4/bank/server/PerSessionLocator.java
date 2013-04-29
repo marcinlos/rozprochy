@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import Bank.InvalidSession;
 import Bank._AccountDisp;
 import Ice.Current;
 import Ice.LocalObjectHolder;
@@ -51,11 +52,15 @@ public class PerSessionLocator implements ServantLocator {
             _AccountDisp acc = servantMap.get(sid);
             if (acc == null) {
                 Session session = sessions.getSessionById(sid);
-                String user = session.getUser();
-                acc = new AccountImpl(sessions, accounts);
-                servantMap.put(sid, acc);
-                System.out.printf("Servant created (user=%s, sid=%s)\n",
-                        user, sid);
+                if (session != null) {
+                    String user = session.getUser();
+                    acc = new AccountImpl(sessions, accounts);
+                    servantMap.put(sid, acc);
+                    System.out.printf("Servant created (user=%s, sid=%s)\n",
+                            user, sid);
+                } else {
+                    throw new InvalidSession();
+                }
             }
             return acc;
         } finally {

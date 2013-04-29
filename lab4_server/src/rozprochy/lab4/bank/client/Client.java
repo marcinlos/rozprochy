@@ -107,6 +107,10 @@ public class Client extends Ice.Application {
         }
     }
     
+    private void invalidateSession() {
+        sessionId = null;
+    }
+    
     private abstract class IceCommand implements Command {
 
         public abstract boolean doExecute(String cmd, Scanner input);
@@ -175,16 +179,15 @@ public class Client extends Ice.Application {
         });
         cli.registerHandler("logout", new IceCommand() {
             @Override public boolean doExecute(String cmd, Scanner input) {
-                if (sessionId != null) {
+                if (checkLogged()) {
                     try {
                         bank.logout(sessionId);
                         sessionId = null;
                         System.out.println("Logged out");
                     } catch (SessionException e) {
                         System.err.println("Invalid session"); 
+                        invalidateSession();
                     }
-                } else {
-                    System.err.println("Not logged in!");
                 }
                 printPrompt();
                 return true;
@@ -199,9 +202,9 @@ public class Client extends Ice.Application {
                         System.out.printf("Account : %10d.00 $\n", balance);
                     } catch (SessionException e) {
                         System.err.println("Invalid session"); 
-                        e.printStackTrace(System.err);
+                        invalidateSession();
                     } catch (OperationException e) {
-                        System.out.println("Operation exception");
+                        System.err.println("Operation exception");
                     }
                 }
                 printPrompt();
@@ -221,8 +224,9 @@ public class Client extends Ice.Application {
                         System.err.println("Usage: deposit <amount>");
                     } catch (SessionException e) {
                         System.err.println("Invalid session"); 
+                        invalidateSession();
                     } catch (OperationException e) {
-                        System.out.println("Operation exception");
+                        System.err.println("Operation exception");
                     }
                 }
                 printPrompt();
@@ -241,9 +245,10 @@ public class Client extends Ice.Application {
                     } catch (NoSuchElementException e) {
                         System.err.println("Usage: withdraw <amount>");
                     } catch (SessionException e) {
-                        System.err.println("Invalid session"); 
+                        System.err.println("Invalid session");
+                        invalidateSession();
                     } catch (OperationException e) {
-                        System.out.println("Operation exception");
+                        System.err.println("Operation exception");
                     }
                 }
                 printPrompt();
@@ -295,8 +300,9 @@ public class Client extends Ice.Application {
                         System.err.println("Usage: withdraw <amount>");
                     } catch (SessionException e) {
                         System.err.println("Invalid session"); 
+                        invalidateSession();
                     } catch (OperationException e) {
-                        System.out.println("Operation exception");
+                        System.err.println("Operation exception");
                     }
                 }
                 printPrompt();
