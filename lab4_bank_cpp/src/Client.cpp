@@ -130,7 +130,7 @@ void Client::exit_gracefully_()
         {
             bank->logout(session_id);
         }
-        catch (const Bank::SessionException&)
+        catch (const Users::SessionException&)
         {
             std::cerr << "Invalid session" << std::endl;
         }
@@ -186,13 +186,17 @@ void Client::register_(std::istream& in)
     {
         std::cerr << "Usage: register <pesel> <password>" << std::endl;
     }
-    catch (const Bank::InvalidPesel&)
+    catch (const Users::InvalidLogin& e)
     {
-        std::cerr << "Invalid PESEL" << std::endl;
+        std::cerr << "Invalid login: " << e.reason << std::endl;
     }
-    catch (const Bank::EmptyPassword&)
+    catch (const Users::InvalidPassword& e)
     {
-        std::cerr << "Empty password not allowed" << std::endl;
+        std::cerr << "Invalid password: " << e.reason << std::endl;
+    }
+    catch (const Users::DbError&)
+    {
+        std::cerr << "Server database error" << std::endl;
     }
 }
 
@@ -211,17 +215,21 @@ void Client::login_(std::istream& in)
     {
         std::cerr << "Usage: login <pesel> <password>" << std::endl;
     }
-    catch (const Bank::AuthenticationFailed&)
+    catch (const Users::AuthenticationFailed&)
     {
         std::cerr << "Invalid login or password" << std::endl;
     }
-    catch (const Bank::MultiLogin&)
+    catch (const Users::MultiLogin&)
     {
         std::cerr << "User already logged in" << std::endl;
     }
-    catch (const Bank::LoginException& e)
+    catch (const Users::LoginException& e)
     {
         std::cerr << e.what() << std::endl;
+    }
+    catch (const Users::DbError&)
+    {
+        std::cerr << "Server database error" << std::endl;
     }
 }
 
@@ -234,7 +242,7 @@ void Client::logout_(std::istream& in)
             bank->logout(session_id);
             session_terminated_();
         }
-        catch (const Bank::SessionException&)
+        catch (const Users::SessionException&)
         {
             std::cerr << "Invalid session" << std::endl;
             session_terminated_();
@@ -253,7 +261,7 @@ void Client::balance_(std::istream& in)
             std::cout << "Account : " << std::setw(10) << balance
                       << ".00 $" << std::endl;
         }
-        catch (const Bank::SessionException&)
+        catch (const Users::SessionException&)
         {
             std::cerr << "Invalid session" << std::endl;
             session_terminated_();
@@ -261,6 +269,10 @@ void Client::balance_(std::istream& in)
         catch (const Bank::OperationException&)
         {
             std::cerr << "Operation exception" << std::endl;
+        }
+        catch (const Users::DbError&)
+        {
+            std::cerr << "Server database error" << std::endl;
         }
     }
 }
@@ -280,7 +292,7 @@ void Client::deposit_(std::istream& in)
         {
             std::cerr << "Usage: deposit <amount>" << std::endl;
         }
-        catch (const Bank::SessionException&)
+        catch (const Users::SessionException&)
         {
             std::cerr << "Invalid session" << std::endl;
             session_terminated_();
@@ -288,6 +300,10 @@ void Client::deposit_(std::istream& in)
         catch (const Bank::OperationException&)
         {
             std::cerr << "Operation exception" << std::endl;
+        }
+        catch (const Users::DbError&)
+        {
+            std::cerr << "Server database error" << std::endl;
         }
     }
 }
@@ -307,7 +323,7 @@ void Client::withdraw_(std::istream& in)
         {
             std::cerr << "Usage: withdraw <amount>" << std::endl;
         }
-        catch (const Bank::SessionException&)
+        catch (const Users::SessionException&)
         {
             std::cerr << "Invalid session" << std::endl;
             session_terminated_();
@@ -315,6 +331,10 @@ void Client::withdraw_(std::istream& in)
         catch (const Bank::OperationException&)
         {
             std::cerr << "Operation exception" << std::endl;
+        }
+        catch (const Users::DbError&)
+        {
+            std::cerr << "Server database error" << std::endl;
         }
     }
 }

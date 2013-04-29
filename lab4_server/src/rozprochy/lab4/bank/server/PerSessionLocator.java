@@ -5,13 +5,13 @@ import java.util.Map;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import Bank.InvalidSession;
 import Bank._AccountDisp;
 import Ice.Current;
 import Ice.LocalObjectHolder;
 import Ice.Object;
 import Ice.ServantLocator;
 import Ice.UserException;
+import Users.InvalidSession;
 
 public class PerSessionLocator implements ServantLocator {
     

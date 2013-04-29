@@ -63,4 +63,10 @@ public class Crypto {
         }
     }
 
+    
+    public static boolean authenticate(String password, byte[] salt, 
+            byte[] hashedPassword) {
+        byte[] value = Crypto.computeHash(password, salt);
+        return Crypto.compareDigests(hashedPassword, value);
+    }
 }

@@ -7,10 +7,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import Bank.InvalidSession;
-import Bank.MultiLogin;
-import Bank.SessionException;
-import Bank.SessionExpired;
+import Users.InvalidSession;
+import Users.MultiLogin;
+import Users.SessionException;
+import Users.SessionExpired;
 
 public class SessionManager {
 

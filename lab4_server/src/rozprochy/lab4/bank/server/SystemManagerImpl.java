@@ -3,14 +3,15 @@ package rozprochy.lab4.bank.server;
 import java.util.Map;
 
 import rozprochy.lab4.util.Crypto;
-import Bank.AuthenticationFailed;
-import Bank.LoginException;
-import Bank.RegisterException;
-import Bank.SessionException;
 import Bank._SystemManagerDisp;
 import Ice.Current;
 import Ice.ObjectAdapter;
 import Ice.ServantLocator;
+import Users.AuthenticationFailed;
+import Users.DbError;
+import Users.LoginException;
+import Users.RegisterException;
+import Users.SessionException;
 
 public class SystemManagerImpl extends _SystemManagerDisp {
 
@@ -24,7 +25,7 @@ public class SystemManagerImpl extends _SystemManagerDisp {
             Map<String, String> config) {
         this.config = config;
         this.adapter = adapter;
-        accounts = new AccountManager(this.config);
+        accounts = new AccountManager("Bank", this.config);
         sessions = new SessionManager(this.config);
         String locatorType = config.get("BankApp.Locator");
         if (locatorType == null) {
@@ -43,15 +44,15 @@ public class SystemManagerImpl extends _SystemManagerDisp {
 
     @Override
     public synchronized void createAccount(String pesel, String password,
-            Current __current) throws RegisterException {
+            Current __current) throws RegisterException, DbError {
         System.out.printf("Account creation attempt (user=%s, pwd=%s)\n", 
                 pesel, password);
-        accounts.create(pesel, password);
+        accounts.create(pesel, password, null);
     }
 
     @Override
     public synchronized String login(String pesel, String password,
-            Current __current) throws LoginException {
+            Current __current) throws LoginException, DbError {
         System.out.printf("Login attempt (user=%s, pwd=%s)\n", pesel, password);
         if (accounts.authenticate(pesel, password)) {
             String sid = Crypto.createSessionId();

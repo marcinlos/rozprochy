@@ -1,9 +1,3 @@
-/*
- * Client.hpp
- *
- *  Created on: Apr 28, 2013
- *      Author: los
- */
 
 #ifndef CLIENT_HPP_
 #define CLIENT_HPP_
@@ -14,6 +8,7 @@
 #include <Ice/Application.h>
 #include <IceUtil/Handle.h>
 #include "../generated/Bank.h"
+#include "../generated/Users.h"
 #include "Pinger.hpp"
 
 

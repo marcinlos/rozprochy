@@ -1,5 +1,7 @@
 package rozprochy.lab4.util;
 
+import static rozprochy.lab4.util.IOExceptionWrapper.wrapIO;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -38,7 +40,7 @@ public class DiskMap<T extends Serializable> extends AbstractMap<String, T> {
         try {
             writeToFile(key, value);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw wrapIO(e);
         }
         return prev;
     }
@@ -50,7 +52,7 @@ public class DiskMap<T extends Serializable> extends AbstractMap<String, T> {
             try {
                 return readFromFile(k);
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw wrapIO(e);
             }
         } else {
             return null;
@@ -102,7 +104,7 @@ public class DiskMap<T extends Serializable> extends AbstractMap<String, T> {
             writer = new PrintWriter(new FileOutputStream(keysFile, true));
             writer.println(encoded);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw wrapIO(e);
         } finally {
             writer.close();
         }
@@ -165,7 +167,7 @@ public class DiskMap<T extends Serializable> extends AbstractMap<String, T> {
                 try {
                     this.scanner = new Scanner(keysFile);
                 } catch (FileNotFoundException e) {
-                    throw new RuntimeException(e);
+                    throw wrapIO(e);
                 }
             }
 
@@ -180,7 +182,7 @@ public class DiskMap<T extends Serializable> extends AbstractMap<String, T> {
                 try {
                     return transform(line);
                 } catch (IOException e) {
-                    throw new RuntimeException(e);
+                    throw wrapIO(e);
                 }
             }
 

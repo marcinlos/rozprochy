@@ -1,10 +1,11 @@
 package rozprochy.lab4.bank.server;
 
 import Bank.OperationException;
-import Bank.SessionException;
-import Bank.SessionExpired;
 import Bank._AccountDisp;
 import Ice.Current;
+import Users.DbError;
+import Users.SessionException;
+import Users.SessionExpired;
 
 public class AccountImpl extends _AccountDisp {
 
@@ -18,7 +19,7 @@ public class AccountImpl extends _AccountDisp {
 
     @Override
     public int getBalance(Current __current) throws OperationException,
-            SessionException {
+            SessionException, DbError {
         //printRequest(__current);
         //System.out.println("AccountImpl.getBalance()");
         AccountData acc = getAccount(__current.id.name);
@@ -29,7 +30,7 @@ public class AccountImpl extends _AccountDisp {
 
     @Override
     public void withdraw(int amount, Current __current)
-            throws OperationException, SessionException {
+            throws OperationException, SessionException, DbError {
         //printRequest(__current);
         //System.out.println("AccountImpl.withdraw()");
         AccountData acc = getAccount(__current.id.name);
@@ -39,7 +40,7 @@ public class AccountImpl extends _AccountDisp {
 
     @Override
     public void deposit(int amount, Current __current)
-            throws OperationException, SessionException {
+            throws OperationException, SessionException, DbError {
         //printRequest(__current);
         //System.out.println("AccountImpl.deposit()");
         AccountData acc = getAccount(__current.id.name);
@@ -53,7 +54,7 @@ public class AccountImpl extends _AccountDisp {
         System.out.println(sb);
     }
     
-    private AccountData getAccount(String sid) throws SessionExpired {
+    private AccountData getAccount(String sid) throws SessionExpired, DbError {
         Session session = sessions.getSessionById(sid);
         if (session != null) {
             return accounts.lockAccount(session.getUser());
@@ -62,7 +63,7 @@ public class AccountImpl extends _AccountDisp {
         }
     }
     
-    private void freeAccount(AccountData account) {
+    private void freeAccount(AccountData account) throws DbError {
         accounts.unlockAccount(account);
     }
 

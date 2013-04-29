@@ -11,18 +11,19 @@ import rozprochy.lab4.cli.Command;
 import rozprochy.lab4.cli.CommandInterpreter;
 import Bank.AccountPrx;
 import Bank.AccountPrxHelper;
-import Bank.AuthenticationFailed;
-import Bank.EmptyPassword;
-import Bank.InvalidPesel;
-import Bank.LoginException;
-import Bank.MultiLogin;
 import Bank.OperationException;
-import Bank.RegisterException;
-import Bank.SessionException;
 import Bank.SystemManagerPrx;
 import Bank.SystemManagerPrxHelper;
 import Ice.ObjectPrx;
 import Ice.Properties;
+import Users.AuthenticationFailed;
+import Users.DbError;
+import Users.InvalidLogin;
+import Users.InvalidPassword;
+import Users.LoginException;
+import Users.MultiLogin;
+import Users.RegisterException;
+import Users.SessionException;
 
 public class Client extends Ice.Application {
 
@@ -146,12 +147,14 @@ public class Client extends Ice.Application {
                     System.out.println("Account successfully created");
                 } catch (NoSuchElementException e) {
                     System.err.println("Usage: register <pesel> <password>");
-                } catch (InvalidPesel e) {
-                    System.err.println("Invalid PESEL");
-                } catch (EmptyPassword e) {
-                    System.err.println("Empty password not allowed");
+                } catch (InvalidLogin e) {
+                    System.err.println("Invalid login: " + e.reason);
+                } catch (InvalidPassword e) {
+                    System.err.println("Invalid password: " + e.reason);
                 } catch (RegisterException e) {
                     e.printStackTrace(System.err);
+                } catch (DbError e) {
+                    System.err.println("Server database error");
                 }
                 printPrompt();
                 return true;
@@ -172,6 +175,8 @@ public class Client extends Ice.Application {
                     System.err.println("User already logged in");
                 } catch (LoginException e) {
                     e.printStackTrace(System.err);
+                } catch (DbError e) {
+                    System.err.println("Server database error");
                 }
                 printPrompt();
                 return true;
@@ -205,6 +210,8 @@ public class Client extends Ice.Application {
                         invalidateSession();
                     } catch (OperationException e) {
                         System.err.println("Operation exception");
+                    } catch (DbError e) {
+                        System.err.println("Server database error");
                     }
                 }
                 printPrompt();
@@ -227,6 +234,8 @@ public class Client extends Ice.Application {
                         invalidateSession();
                     } catch (OperationException e) {
                         System.err.println("Operation exception");
+                    } catch (DbError e) {
+                        System.err.println("Server database error");
                     }
                 }
                 printPrompt();
@@ -249,6 +258,8 @@ public class Client extends Ice.Application {
                         invalidateSession();
                     } catch (OperationException e) {
                         System.err.println("Operation exception");
+                    } catch (DbError e) {
+                        System.err.println("Server database error");
                     }
                 }
                 printPrompt();
@@ -303,6 +314,8 @@ public class Client extends Ice.Application {
                         invalidateSession();
                     } catch (OperationException e) {
                         System.err.println("Operation exception");
+                    } catch (DbError e) {
+                        System.err.println("Server database error");
                     }
                 }
                 printPrompt();
