@@ -8,6 +8,7 @@ import java.util.TimerTask;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import rozprochy.lab4.generic.Session;
 import rozprochy.lab4.generic.SessionManager;
 
 import Bank._AccountDisp;
@@ -23,7 +24,7 @@ public class RoundRobinLocator implements ServantLocator {
 
     private List<_AccountDisp> servants = new ArrayList<_AccountDisp>();
     
-    private SessionManager sessions;
+    private SessionManager<Session> sessions;
     private AccountManager accounts;
     
     private Lock servantListLock = new ReentrantLock();
@@ -38,7 +39,7 @@ public class RoundRobinLocator implements ServantLocator {
     /** How many calls per second is one servant supposedly ready to handler */
     private int maxPerServant = 10;
     
-    public RoundRobinLocator(final SessionManager sessions, 
+    public RoundRobinLocator(final SessionManager<Session> sessions, 
             final AccountManager accounts, Map<String, String> config) {
         this.sessions = sessions;
         this.accounts = accounts;
@@ -67,7 +68,7 @@ public class RoundRobinLocator implements ServantLocator {
         System.out.println("Servant locator created");
     }
     
-    private AccountImpl makeServant(SessionManager sessions,
+    private AccountImpl makeServant(SessionManager<Session> sessions,
             AccountManager accounts) {
         return new AccountImpl(sessions, accounts);
     }

@@ -4,7 +4,6 @@ import java.util.Map;
 
 import rozprochy.lab4.generic.RemovalReason;
 import rozprochy.lab4.generic.Session;
-import rozprochy.lab4.generic.SessionManager;
 import rozprochy.lab4.util.Crypto;
 import Chat.MemberPrx;
 import Chat.MemberPrxHelper;
@@ -22,8 +21,9 @@ import Users.SessionException;
 public class ChatSystemManager extends _SystemManagerDisp {
 
     private AccountManager accounts;
-    private SessionManager sessions;
-
+    private BiSessionManager sessions;
+    private RoomManager rooms;
+    
     private ObjectAdapter adapter;
     private Map<String, String> config;
     
@@ -34,8 +34,12 @@ public class ChatSystemManager extends _SystemManagerDisp {
         this.config = config;
         this.adapter = adapter;
         accounts = new AccountManager("Chat", this.config);
-        sessions = new SessionManager("ChatApp", this.config);
-        /*String locatorType = config.get("BankApp.Locator");
+        sessions = new BiSessionManager("ChatApp", this.config);
+        
+        rooms = new RoomManager(config);
+        
+        /*
+        String locatorType = config.get("BankApp.Locator");
         if (locatorType == null) {
             System.out.println("Locator type unspecified, using default");
         }
@@ -47,7 +51,8 @@ public class ChatSystemManager extends _SystemManagerDisp {
         } catch (UnknownLocatorType e) {
             System.err.println("Unknown locator type: '" + locatorType + "'");
             throw new RuntimeException(e);
-        }*/
+        }
+        */
     }
 
     @Override
@@ -65,7 +70,7 @@ public class ChatSystemManager extends _SystemManagerDisp {
                 login, password);
         if (accounts.authenticate(login, password)) {
             String sid = Crypto.createSessionId();
-            Session session = new Session(sid, login);
+            BiSession session = new BiSession(sid, login);
             sessions.addSession(session);
             System.out.printf("%sLogged in (user=%s, pwd=%s)\n", PREFIX, login, 
                     password);
@@ -105,6 +110,7 @@ public class ChatSystemManager extends _SystemManagerDisp {
         Identity id = callback.ice_getIdentity();
         ObjectPrx obj = __current.con.createProxy(id);
         MemberPrx cb = MemberPrxHelper.uncheckedCast(obj);
+        sessions.addCallback(sessionId, cb);
         cb.greet("Welcomeeeee");
     }
 

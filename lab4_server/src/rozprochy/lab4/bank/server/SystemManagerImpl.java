@@ -19,7 +19,7 @@ import Users.SessionException;
 public class SystemManagerImpl extends _SystemManagerDisp {
 
     private AccountManager accounts;
-    private SessionManager sessions;
+    private SessionManager<Session> sessions;
 
     private ObjectAdapter adapter;
     private Map<String, String> config;
@@ -31,7 +31,7 @@ public class SystemManagerImpl extends _SystemManagerDisp {
         this.config = config;
         this.adapter = adapter;
         accounts = new AccountManager("Bank", this.config);
-        sessions = new SessionManager("BankApp", this.config);
+        sessions = new SessionManager<Session>("BankApp", this.config);
         String locatorType = config.get("BankApp.Locator");
         if (locatorType == null) {
             System.out.println(PREFIX + "Locator type unspecified, " +
@@ -60,7 +60,7 @@ public class SystemManagerImpl extends _SystemManagerDisp {
     @Override
     public synchronized String login(String pesel, String password,
             Current __current) throws LoginException, DbError {
-        System.out.printf("PREFIX + Login attempt (user=%s, pwd=%s)\n", 
+        System.out.printf(PREFIX + "Login attempt (user=%s, pwd=%s)\n", 
                 pesel, password);
         if (accounts.authenticate(pesel, password)) {
             String sid = Crypto.createSessionId();

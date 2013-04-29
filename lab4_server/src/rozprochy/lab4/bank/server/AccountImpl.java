@@ -11,10 +11,11 @@ import Users.SessionExpired;
 
 public class AccountImpl extends _AccountDisp {
 
-    protected SessionManager sessions;
+    protected SessionManager<Session> sessions;
     protected AccountManager accounts;
     
-    public AccountImpl(SessionManager sessions, AccountManager accounts) {
+    public AccountImpl(SessionManager<Session> sessions, 
+            AccountManager accounts) {
         this.sessions = sessions;
         this.accounts = accounts;
     }

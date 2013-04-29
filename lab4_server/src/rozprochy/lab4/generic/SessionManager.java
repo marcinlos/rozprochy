@@ -13,17 +13,17 @@ import Users.MultiLogin;
 import Users.SessionException;
 import Users.SessionExpired;
 
-public class SessionManager {
+public class SessionManager<T extends Session> {
 
     private int evictionInterval;
     private int sessionTimeout;
 
     // sid -> session
-    private Map<String, Session> sessions = new HashMap<String, Session>();
+    protected Map<String, T> sessions = new HashMap<String, T>();
     // login -> session
-    private Map<String, Session> logged = new HashMap<String, Session>();
+    protected Map<String, T> logged = new HashMap<String, T>();
     
-    private Object lock = new Object();
+    protected Object lock = new Object();
     
     private Map<String, String> config;
     private Thread sessionEvictor;
@@ -42,7 +42,7 @@ public class SessionManager {
         System.out.println(this.prefix + "Session manager activated");
     }
     
-    private void loadProperties() {
+    protected void loadProperties() {
         System.out.println(prefix + "Loading session manager configuration");
         evictionInterval = tryParseValue(confPrefix + ".EvictPeriod", 30000);
         System.out.printf(prefix + "   Eviction interval: %d ms\n", 
@@ -52,7 +52,7 @@ public class SessionManager {
                 sessionTimeout);
     }
     
-    private int tryParseValue(String prop, int defaultValue) {
+    protected int tryParseValue(String prop, int defaultValue) {
         String val = config.get(prop);
         if (val != null) {
             try {
@@ -72,9 +72,9 @@ public class SessionManager {
         }
     }
     
-    public Session getSessionById(String sid) throws SessionExpired {
+    public T getSessionById(String sid) throws SessionExpired {
         synchronized (lock) {
-            Session session = sessions.get(sid);
+            T session = sessions.get(sid);
             if (session != null) {
                 if (! removeIfExpired(session)) {
                     return session;
@@ -87,9 +87,9 @@ public class SessionManager {
         }
     }
     
-    public Session getSessionByUser(String login) throws SessionExpired {
+    public T getSessionByUser(String login) throws SessionExpired {
         synchronized (lock) {
-            Session session = logged.get(login);
+            T session = logged.get(login);
             if (! removeIfExpired(session)) {
                 return session;
             } else {
@@ -98,7 +98,7 @@ public class SessionManager {
         }
     }
     
-    public void addSession(Session session) throws MultiLogin {
+    public void addSession(T session) throws MultiLogin {
         String sid = session.getId();
         String pesel = session.getUser();
         synchronized (lock) {
@@ -114,7 +114,7 @@ public class SessionManager {
     
     public void keepalive(String sid) throws SessionException {
         try {
-            Session session = getSessionById(sid);
+            T session = getSessionById(sid);
             if (session != null) {
                 session.touch();
             } else {
@@ -130,7 +130,7 @@ public class SessionManager {
     public boolean removeSession(String sid, RemovalReason reason) 
             throws InvalidSession {
         synchronized (lock) {
-            Session session = sessions.get(sid);
+            T session = sessions.get(sid);
             if (session != null) {
                 String pesel = session.getUser();
                 sessions.remove(sid);
@@ -146,7 +146,7 @@ public class SessionManager {
         }
     }
     
-    private boolean removeIfExpired(Session session) {
+    protected boolean removeIfExpired(T session) {
         if (expired(session)) {
             removeExpired(session);
             return true;
@@ -155,12 +155,12 @@ public class SessionManager {
         }
     }
     
-    private boolean expired(Session session) {
+    protected boolean expired(T session) {
         long time = session.timeSinceUsed();
         return time > sessionTimeout;
     }
     
-    private void removeExpired(Session session) {
+    protected void removeExpired(T session) {
         long time = session.timeSinceUsed();
         String sid = session.getId();
         String user = session.getUser();
@@ -191,7 +191,7 @@ public class SessionManager {
     
     public boolean isUserLogged(String login) {
         synchronized (lock) {
-            Session session = logged.get(login);
+            T session = logged.get(login);
             if (session != null) {
                 try {
                     checkSessionActive(session.getId());
@@ -208,13 +208,17 @@ public class SessionManager {
     private void initEvictorDeamon() {
         System.out.print(prefix + "Initiating session evictor deamon...");
         System.out.flush();
-        sessionEvictor = new Thread(new SessionEvictor());
+        sessionEvictor = new Thread(createEvictor());
         sessionEvictor.setDaemon(true);
         sessionEvictor.start();
         System.out.println("done");
     }
     
-    private class SessionEvictor implements Runnable {
+    protected Runnable createEvictor() {
+        return new SessionEvictor();
+    }
+    
+    protected class SessionEvictor implements Runnable {
 
         @Override
         public void run() {
@@ -233,18 +237,23 @@ public class SessionManager {
             int examined = 0;
             int evicted = 0;
             synchronized (lock) {
-                Set<Session> sess = new HashSet<Session>(sessions.values());
-                for (Session session: sess) {
+                Set<T> sess = new HashSet<T>(sessions.values());
+                for (T session: sess) {
                     ++ examined;
                     if (expired(session)) {
                         ++ evicted;
                         removeExpired(session);
+                        sessionRemoved(session);
                     }
                 }
             }
             System.out.println(prefix + "Session evictor pass completed:");
             System.out.printf(prefix + "   %4d examined\n", examined);
             System.out.printf(prefix + "   %4d evicted\n", evicted);
+        }
+        
+        protected void sessionRemoved(T session) {
+            // empty
         }
         
     }

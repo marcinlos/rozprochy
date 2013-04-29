@@ -20,7 +20,7 @@ import Users.InvalidSession;
 
 public class PerSessionLocator implements ServantLocator {
     
-    private SessionManager sessions;
+    private SessionManager<Session> sessions;
     private AccountManager accounts;
     
     //private Map<String, String> config;
@@ -29,8 +29,8 @@ public class PerSessionLocator implements ServantLocator {
     private Map<String, _AccountDisp> servantMap = 
             new HashMap<String, _AccountDisp>();
 
-    public PerSessionLocator(SessionManager sessions, AccountManager accounts, 
-            Map<String, String> config) {
+    public PerSessionLocator(SessionManager<Session> sessions, 
+            AccountManager accounts, Map<String, String> config) {
         this.sessions = sessions;
         this.accounts = accounts;
         //this.config = config;
