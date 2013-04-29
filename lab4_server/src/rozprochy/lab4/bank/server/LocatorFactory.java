@@ -2,6 +2,8 @@ package rozprochy.lab4.bank.server;
 
 import java.util.Map;
 
+import rozprochy.lab4.generic.SessionManager;
+
 import Ice.ServantLocator;
 
 public class LocatorFactory {

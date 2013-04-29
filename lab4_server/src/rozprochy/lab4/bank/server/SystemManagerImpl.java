@@ -4,6 +4,7 @@ import java.util.Map;
 
 import rozprochy.lab4.generic.RemovalReason;
 import rozprochy.lab4.generic.Session;
+import rozprochy.lab4.generic.SessionManager;
 import rozprochy.lab4.util.Crypto;
 import Bank._SystemManagerDisp;
 import Ice.Current;
@@ -30,7 +31,7 @@ public class SystemManagerImpl extends _SystemManagerDisp {
         this.config = config;
         this.adapter = adapter;
         accounts = new AccountManager("Bank", this.config);
-        sessions = new SessionManager(this.config);
+        sessions = new SessionManager("BankApp", this.config);
         String locatorType = config.get("BankApp.Locator");
         if (locatorType == null) {
             System.out.println(PREFIX + "Locator type unspecified, " +

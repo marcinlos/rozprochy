@@ -8,6 +8,8 @@ import java.util.TimerTask;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import rozprochy.lab4.generic.SessionManager;
+
 import Bank._AccountDisp;
 import Ice.Current;
 import Ice.Identity;

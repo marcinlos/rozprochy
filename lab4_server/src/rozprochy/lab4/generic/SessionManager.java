@@ -1,4 +1,4 @@
-package rozprochy.lab4.bank.server;
+package rozprochy.lab4.generic;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -7,9 +7,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import rozprochy.lab4.generic.RemovalReason;
-import rozprochy.lab4.generic.Session;
-import rozprochy.lab4.generic.SessionListener;
 
 import Users.InvalidSession;
 import Users.MultiLogin;
@@ -23,7 +20,7 @@ public class SessionManager {
 
     // sid -> session
     private Map<String, Session> sessions = new HashMap<String, Session>();
-    // pesel -> session
+    // login -> session
     private Map<String, Session> logged = new HashMap<String, Session>();
     
     private Object lock = new Object();
@@ -32,20 +29,27 @@ public class SessionManager {
     private Thread sessionEvictor;
     private List<SessionListener> listeners = new ArrayList<SessionListener>();
     
-    public SessionManager(Map<String, String> config) {
-        System.out.println("Initiating session manager");
+    private String prefix;
+    private String confPrefix;
+    
+    public SessionManager(String prefix, Map<String, String> config) {
+        this.prefix = String.format("[%s] ", prefix);
+        this.confPrefix = prefix + ".Session";
+        System.out.println(this.prefix + "Initiating session manager");
         this.config = config;
         loadProperties();
         initEvictorDeamon();
-        System.out.println("Session manager activated");
+        System.out.println(this.prefix + "Session manager activated");
     }
     
     private void loadProperties() {
-        System.out.println("Loading session manager configuration");
-        evictionInterval = tryParseValue("BankApp.Session.EvictPeriod", 30000);
-        System.out.printf("   Eviction interval: %d ms\n", evictionInterval);
-        sessionTimeout = tryParseValue("BankApp.Session.Timeout", 5000);
-        System.out.printf("   Session timeout: %d ms\n", sessionTimeout);
+        System.out.println(prefix + "Loading session manager configuration");
+        evictionInterval = tryParseValue(confPrefix + ".EvictPeriod", 30000);
+        System.out.printf(prefix + "   Eviction interval: %d ms\n", 
+                evictionInterval);
+        sessionTimeout = tryParseValue(confPrefix + ".Timeout", 5000);
+        System.out.printf(prefix + "   Session timeout: %d ms\n", 
+                sessionTimeout);
     }
     
     private int tryParseValue(String prop, int defaultValue) {
@@ -54,7 +58,7 @@ public class SessionManager {
             try {
                 return Integer.valueOf(val);
             } catch (NumberFormatException e) {
-                System.out.printf("   (invalid value '%s')'n", val);
+                System.out.printf(prefix + "   (invalid value '%s')'n", val);
                 return defaultValue;
             }
         } else {
@@ -83,9 +87,9 @@ public class SessionManager {
         }
     }
     
-    public Session getSessionByUser(String pesel) throws SessionExpired {
+    public Session getSessionByUser(String login) throws SessionExpired {
         synchronized (lock) {
-            Session session = logged.get(pesel);
+            Session session = logged.get(login);
             if (! removeIfExpired(session)) {
                 return session;
             } else {
@@ -103,7 +107,8 @@ public class SessionManager {
             }
             sessions.put(sid, session);
             logged.put(pesel, session);
-            System.out.printf("New session (user=%s, sid=%s)\n", pesel, sid);
+            System.out.printf(prefix + "New session (user=%s, sid=%s)\n", 
+                    pesel, sid);
         }
     }
     
@@ -115,9 +120,9 @@ public class SessionManager {
             } else {
                 throw new InvalidSession();
             }
-            System.out.printf("Session ping (sid=%s)\n", sid);
+            System.out.printf(prefix + "Session ping (sid=%s)\n", sid);
         } catch (SessionException e) {
-            System.out.printf("Session ping failed (sid=%s)\n", sid);
+            System.out.printf(prefix + "Session ping failed (sid=%s)\n", sid);
             throw e;
         }
     }
@@ -130,8 +135,9 @@ public class SessionManager {
                 String pesel = session.getUser();
                 sessions.remove(sid);
                 logged.remove(pesel);
-                System.out.printf("Session terminated (user=%s, sid=%s)\n" + 
-                        "   reason: %s\n", pesel, sid, reason.toString());
+                System.out.printf(prefix + "Session terminated (user=%s, " + 
+                        "sid=%s)\n   reason: %s\n", pesel, sid, 
+                        reason.toString());
                 informAboutRemoval(sid, reason);
                 return true;
             } else {
@@ -158,14 +164,14 @@ public class SessionManager {
         long time = session.timeSinceUsed();
         String sid = session.getId();
         String user = session.getUser();
-        System.out.printf("Session (sid=%s, user=%s) " +
+        System.out.printf(prefix + "Session (sid=%s, user=%s) " +
                 "timed out (%.2fs)\n", sid, user, time / 1000.0);
         try {
             removeSession(sid, RemovalReason.EXPIRED);
         } catch (InvalidSession e) {
             // REALLY shouldn't happen
-            System.err.println("Internal error: session removed while " +
-                    "being examined by session evictor");
+            System.err.println(prefix + "Internal error: session removed " + 
+                    "while being examined by session evictor");
         }
     }
     
@@ -183,9 +189,9 @@ public class SessionManager {
         }
     }
     
-    public boolean isUserLogged(String pesel) {
+    public boolean isUserLogged(String login) {
         synchronized (lock) {
-            Session session = logged.get(pesel);
+            Session session = logged.get(login);
             if (session != null) {
                 try {
                     checkSessionActive(session.getId());
@@ -200,7 +206,7 @@ public class SessionManager {
     }
     
     private void initEvictorDeamon() {
-        System.out.print("Initiating session evictor deamon...");
+        System.out.print(prefix + "Initiating session evictor deamon...");
         System.out.flush();
         sessionEvictor = new Thread(new SessionEvictor());
         sessionEvictor.setDaemon(true);
@@ -218,12 +224,12 @@ public class SessionManager {
                     runCheckPass();
                 }
             } catch (InterruptedException e) {
-                System.out.println("Evictor thread interrupted");
+                System.out.println(prefix + "Evictor thread interrupted");
             }
         }
         
         private void runCheckPass() {
-            System.out.println("Session evictor pass begins...");
+            System.out.println(prefix + "Session evictor pass begins...");
             int examined = 0;
             int evicted = 0;
             synchronized (lock) {
@@ -236,9 +242,9 @@ public class SessionManager {
                     }
                 }
             }
-            System.out.println("Session evictor pass completed:");
-            System.out.printf("   %4d examined\n", examined);
-            System.out.printf("   %4d evicted\n", evicted);
+            System.out.println(prefix + "Session evictor pass completed:");
+            System.out.printf(prefix + "   %4d examined\n", examined);
+            System.out.printf(prefix + "   %4d evicted\n", evicted);
         }
         
     }

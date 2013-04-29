@@ -8,6 +8,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import rozprochy.lab4.generic.RemovalReason;
 import rozprochy.lab4.generic.Session;
 import rozprochy.lab4.generic.SessionListener;
+import rozprochy.lab4.generic.SessionManager;
 
 import Bank._AccountDisp;
 import Ice.Current;

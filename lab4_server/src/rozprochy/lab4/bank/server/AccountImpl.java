@@ -1,6 +1,7 @@
 package rozprochy.lab4.bank.server;
 
 import rozprochy.lab4.generic.Session;
+import rozprochy.lab4.generic.SessionManager;
 import Bank.OperationException;
 import Bank._AccountDisp;
 import Ice.Current;

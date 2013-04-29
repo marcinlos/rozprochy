@@ -2,9 +2,9 @@ package rozprochy.lab4.chat.server;
 
 import java.util.Map;
 
-import rozprochy.lab4.bank.server.SessionManager;
 import rozprochy.lab4.generic.RemovalReason;
 import rozprochy.lab4.generic.Session;
+import rozprochy.lab4.generic.SessionManager;
 import rozprochy.lab4.util.Crypto;
 import Chat.MemberPrx;
 import Chat.MemberPrxHelper;
@@ -34,7 +34,7 @@ public class ChatSystemManager extends _SystemManagerDisp {
         this.config = config;
         this.adapter = adapter;
         accounts = new AccountManager("Chat", this.config);
-        sessions = new SessionManager(this.config);
+        sessions = new SessionManager("ChatApp", this.config);
         /*String locatorType = config.get("BankApp.Locator");
         if (locatorType == null) {
             System.out.println("Locator type unspecified, using default");
