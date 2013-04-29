@@ -25,6 +25,9 @@ module Chat {
     
     exception NeedForRecovery extends ChatException { };
 
+    exception CannotCreateRoom extends ChatException { };
+    exception InvalidRoomName extends CannotCreateRoom { };
+    exception RoomAlreadyExists extends CannotCreateRoom { };
 
     sequence<string> Rooms;
     interface Member;
@@ -45,6 +48,8 @@ module Chat {
         void logout(string sessionId) throws Users::SessionException;  
         
         Rooms getRooms(string sessionId) throws Users::SessionException;
+        
+        void createRoom(string name) throws CannotCreateRoom;
     };
 
     struct Message {

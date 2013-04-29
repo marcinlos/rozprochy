@@ -3,8 +3,8 @@ package rozprochy.lab4.chat.server;
 import java.util.Map;
 
 import rozprochy.lab4.generic.RemovalReason;
-import rozprochy.lab4.generic.Session;
 import rozprochy.lab4.util.Crypto;
+import Chat.CannotCreateRoom;
 import Chat.MemberPrx;
 import Chat.MemberPrxHelper;
 import Chat._SystemManagerDisp;
@@ -112,6 +112,12 @@ public class ChatSystemManager extends _SystemManagerDisp {
         MemberPrx cb = MemberPrxHelper.uncheckedCast(obj);
         sessions.addCallback(sessionId, cb);
         cb.greet("Welcomeeeee");
+    }
+
+    @Override
+    public void createRoom(String name, Current __current)
+            throws CannotCreateRoom {
+        rooms.createRoom(name);
     }
 
 }
