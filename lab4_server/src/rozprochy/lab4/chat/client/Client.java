@@ -1,5 +1,10 @@
 package rozprochy.lab4.chat.client;
 
+import static rozprochy.lab4.util.Console.BLUE;
+import static rozprochy.lab4.util.Console.COLORS;
+import static rozprochy.lab4.util.Console.GREEN;
+import static rozprochy.lab4.util.Console.RESET;
+
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -9,7 +14,6 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
 
-import rozprochy.lab4.cli.Command;
 import rozprochy.lab4.cli.CommandInterpreter;
 import Chat.MemberPrx;
 import Chat.MemberPrxHelper;
@@ -54,14 +58,6 @@ public class Client extends Ice.Application {
     
     private static final int PING_PERIOD = 5000;
     
-    // Colors
-    private static final String CONSOLE_RESET = "\u001B[0m";
-    private static final String CONSOLE_RED   = "\u001B[1;31m";
-    private static final String CONSOLE_WHITE   = "\u001B[1;37m";
-    private static final String CONSOLE_GREEN   = "\u001B[1;32m";
-    private static final String CONSOLE_YELLOW   = "\u001B[1;33m";
-    
-    
     @Override
     public int run(String[] args) {
         loadProperties();
@@ -97,33 +93,7 @@ public class Client extends Ice.Application {
         adapter = communicator().createObjectAdapter("");
         String uuid = UUID.randomUUID().toString();
         Identity id = communicator().stringToIdentity(uuid);
-        callback = new _MemberDisp() {
-            @Override
-            public void userLeaved(String room, String login, Current __current) {
-            }
-            @Override
-            public void userJoined(String room, String login, Current __current) {
-            }
-            @Override
-            public void newMultipleMessages(Message[] msgs, Current __current) {
-                for (Message msg: msgs) {
-                    printMessage(msg);
-                }
-                printPrompt();
-            }
-            @Override
-            public void newMessage(Message msg, Current __current) {
-                printMessage(msg);
-                printPrompt();
-            }
-            @Override
-            public void keepalive(Current __current) {
-            }
-            @Override
-            public void greet(String greeting, Current __current) {
-                System.out.println(greeting);
-            }
-        };
+        callback = new Callback();
         ObjectPrx obj = adapter.add(callback, id);
         MemberPrx proxy = MemberPrxHelper.uncheckedCast(obj);
         adapter.activate();
@@ -177,30 +147,68 @@ public class Client extends Ice.Application {
         }
     }
     
-    private abstract class IceCommand implements Command {
-
-        public abstract boolean doExecute(String cmd, Scanner input);
-        
-        @Override
-        public boolean execute(String cmd, Scanner input) {
-            try {
-                return doExecute(cmd, input);
-            } catch (Ice.ConnectFailedException e) {
-                System.err.println("Connection failed: " + e.getMessage());
-            } catch (Ice.LocalException e) {
-                System.err.println("Ice problem");
-                e.printStackTrace(System.err);
-            }
-            return true;
-        }
-        
+    private String colorForLogin(String login) {
+        int h = betterHash(login);
+        int color = h % (COLORS.length - 1);
+        return COLORS[color + 1];
     }
     
-    private void printPrompt() {
-        if (roomName != null) {
-            System.out.print(roomName);
+    private class Callback extends _MemberDisp {
+        @Override
+        public void userLeft(String room, String login, Current __current) {
+            Date date = new Date();
+            SimpleDateFormat df = new SimpleDateFormat("hh:mm:ss");
+            String dateStr = df.format(date);
+            String col = colorForLogin(login);
+            String text = String.format("\r%s[%s] %s %sUser %s%s%s has " +
+                    "left the room", GREEN, room, dateStr, RESET, col, 
+                    login, RESET);
+            System.out.println(text);
+            printPrompt();
         }
-        System.out.print(prompt);
+
+        @Override
+        public void userJoined(String room, String login, Current __current) {
+            Date date = new Date();
+            SimpleDateFormat df = new SimpleDateFormat("hh:mm:ss");
+            String dateStr = df.format(date);
+            String col = colorForLogin(login);
+            String text = String.format("\r%s[%s] %s %sUser %s%s%s has " +
+                    "joined the room", GREEN, room, dateStr, RESET, col, 
+                    login, RESET);
+            System.out.println(text);
+            printPrompt();
+        }
+
+        @Override
+        public void newMultipleMessages(Message[] msgs, Current __current) {
+            for (Message msg: msgs) {
+                printMessage(msg);
+            }
+            printPrompt();
+        }
+
+        @Override
+        public void newMessage(Message msg, Current __current) {
+            printMessage(msg);
+            printPrompt();
+        }
+
+        @Override
+        public void greet(String greeting, Current __current) {
+            System.out.println(greeting);
+        }
+    }
+
+
+    private void printPrompt() {
+        StringBuilder sb = new StringBuilder('\r');
+        sb.append(BLUE);
+        if (roomName != null) {
+            sb.append(roomName);
+        }
+        sb.append(prompt).append(RESET);
+        System.out.print(sb);
         System.out.flush();
     }
     
@@ -246,6 +254,17 @@ public class Client extends Ice.Application {
                     e.printStackTrace(System.err);
                 } catch (DbError e) {
                     System.err.println("Server database error");
+                }
+                printPrompt();
+                return true;
+            }
+        });
+        cli.registerHandler("usesid", new IceCommand() {
+            @Override public boolean doExecute(String cmd, Scanner input) {
+                try {
+                    sessionId = input.next();
+                } catch (NoSuchElementException e) {
+                    System.err.println("Usage: usesid <sid>");
                 }
                 printPrompt();
                 return true;
@@ -440,12 +459,27 @@ public class Client extends Ice.Application {
         }
     }
     
+    private int betterHash(String string) {
+        int hash, i;
+        for(hash = i = 0; i < string.length(); ++i)
+        {
+            hash += string.charAt(i);
+            hash += (hash << 10);
+            hash ^= (hash >> 6);
+        }
+        hash += (hash << 3);
+        hash ^= (hash >> 11);
+        hash += (hash << 15);
+        return hash >>> 5;
+    }
+    
     private void printMessage(Message message) {
         Date date = new Date(message.timestamp);
         SimpleDateFormat df = new SimpleDateFormat("hh:mm:ss");
         String dateStr = df.format(date);
-        String text = String.format("\r%s[%s] %s %s%s %s", CONSOLE_GREEN,
-                message.room, dateStr, message.author, CONSOLE_RESET,
+        String col = colorForLogin(message.author);
+        String text = String.format("\r%s[%s] %s %s%s%s %s", GREEN, 
+                message.room, dateStr, col, message.author, RESET, 
                 message.content);
         System.out.println(text);
     }

@@ -7,6 +7,8 @@ import java.util.Set;
 import rozprochy.lab4.generic.RemovalReason;
 import rozprochy.lab4.generic.Session;
 import Chat.Callback_Member_newMessage;
+import Chat.Callback_Member_userJoined;
+import Chat.Callback_Member_userLeft;
 import Chat.MemberPrx;
 import Chat.Message;
 import Chat.NotAMember;
@@ -15,6 +17,7 @@ import Ice.Current;
 import Ice.LocalException;
 import Users.InvalidSession;
 import Users.SessionException;
+import Users.SessionExpired;
 
 public class RoomImpl extends _RoomDisp {
     
@@ -46,6 +49,9 @@ public class RoomImpl extends _RoomDisp {
         System.out.println(prefix + "User " + user + " is gone (" + reason + ")");
         synchronized (users) {
             users.remove(user);
+            for (String u: users) {
+                notifyAboutLeave(user, u);
+            }
         }
     }
 
@@ -59,8 +65,10 @@ public class RoomImpl extends _RoomDisp {
         String user = session.getUser();
         System.out.println(prefix + "User " + user + " joined");
         manager.addUserRoom(user, name);
-        // TODO Inform everyone
         synchronized (users) {
+            for (String u: users) {
+                notifyAboutJoin(user, u);
+            }
             users.add(user);
         }
         session.getCallback().greet("Welcome in " + name + "!");
@@ -85,8 +93,12 @@ public class RoomImpl extends _RoomDisp {
             if (users.contains(user)) {
                 System.out.println(prefix + "User " + user + " has left");
                 manager.removeUserRoom(user, name);
-                // TODO Inform everyone
-                users.remove(user);
+                synchronized (users) {
+                    users.remove(user);
+                    for (String u: users) {
+                        notifyAboutLeave(user, u);
+                    }
+                }
                 // TODO unsupported for now
                 //database.removeUser(user);
             } else {
@@ -103,45 +115,113 @@ public class RoomImpl extends _RoomDisp {
             throw new InvalidSession();
         }
         String user = session.getUser();
-        final Message message = new Message();
+        Message message = new Message();
         message.author = user;
         message.timestamp = new Date().getTime();
         message.content = text;
         message.room = name;
         database.addMessage(message);
-        // TODO Inform everyone
         synchronized (users) {
-            for (final String u: users) {
-                BiSession s = sessions.getSessionByUser(u);
-                MemberPrx cb = s.getCallback();
-                if (cb != null) {
-                    /*try {
-                        cb.newMessage(message);
-                        database.updateUser(u, message.id);
-                    } catch (Ice.SocketException e) {
-                        System.err.println("Socket exc");
-                    } catch (Ice.TimeoutException e) {
-                        System.err.println("Timeout exc");
-                    }*/
-                    cb.begin_newMessage(message, new Callback_Member_newMessage() {
-                        
-                        @Override
-                        public void response() {
-                            database.updateUser(u, message.id);
-                        }
-                        
-                        @Override
-                        public void exception(LocalException ex) {
-                            try {
-                                throw ex;
-                            } catch (Ice.SocketException e) {
-                                System.err.println("Socket exc");
-                            } catch (Ice.TimeoutException e) {
-                                System.err.println("Timeout exc");
-                            }    
-                        }
-                    });
-                }
+            for (String u: users) {
+                notifyAboutMessage(message, u);
+            }
+        }
+    }
+
+    private void notifyAboutMessage(final Message message, final String user) {
+        try {
+            BiSession s = sessions.getSessionByUser(user);
+            MemberPrx cb = s.getCallback();
+            if (cb != null) {
+                cb.begin_newMessage(message, new NewMessageCallback(message, user));
+            }
+        } catch (SessionExpired e) {
+            // Swallow, nothing extraordinary
+            System.out.printf("%sAttempt to notify timed-out user about " + 
+                    "a new message(user=%s)\n", prefix, user);
+        }
+    }
+    
+    private void notifyAboutJoin(final String joined, final String user) {
+        try {
+            BiSession s = sessions.getSessionByUser(user);
+            MemberPrx cb = s.getCallback();
+            if (cb != null) {
+                cb.begin_userJoined(name, joined, new UserJoinedCallback());
+            }
+        } catch (SessionExpired e) {
+            // Swallow, nothing extraordinary
+            System.out.printf("%sAttempt to notify timed-out user about " + 
+                    "new room member (user=%s)\n", prefix, user);
+        }
+    }
+    
+    private void notifyAboutLeave(final String joined, final String user) {
+        try {
+            BiSession s = sessions.getSessionByUser(user);
+            MemberPrx cb = s.getCallback();
+            if (cb != null) {
+                cb.begin_userLeft(name, joined, new UserLeftCallback());
+            }
+        } catch (SessionExpired e) {
+            // Swallow, nothing extraordinary
+            System.out.printf("%sAttempt to notify timed-out user about " + 
+                    "departure of a room member (user=%s)\n", prefix, user);
+        }
+    }
+    
+    private class NewMessageCallback extends Callback_Member_newMessage {
+        private final Message message;
+        private final String user;
+
+        private NewMessageCallback(Message message, String user) {
+            this.message = message;
+            this.user = user;
+        }
+
+        @Override public void response() {
+            database.updateUser(user, message.id);
+        }
+
+        @Override public void exception(LocalException ex) {
+            try {
+                throw ex;
+            } catch (Ice.SocketException e) {
+                System.err.println("Socket exc");
+            } catch (Ice.TimeoutException e) {
+                System.err.println("Timeout exc");
+            }
+        }
+    }
+
+    private class UserJoinedCallback extends Callback_Member_userJoined {
+        @Override public void response() { 
+            // empty
+        }
+        
+        @Override public void exception(LocalException ex) {
+            try {
+                throw ex;
+            } catch (Ice.SocketException e) {
+                System.err.println("Socket exc");
+            } catch (Ice.TimeoutException e) {
+                System.err.println("Timeout exc");
+            }
+        }
+    }
+    
+    private class UserLeftCallback extends Callback_Member_userLeft {
+        @Override public void response() { 
+            // empty
+        }
+        
+        @Override public void exception(LocalException ex) {
+            try {
+                throw ex;
+            } catch (Ice.SocketException e) {
+                System.err.println("Socket exc");
+            } catch (Ice.TimeoutException e) {
+                System.err.println("Timeout exc");
             }
         }
     }

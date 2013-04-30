@@ -66,11 +66,10 @@ module Chat {
     
     interface Member {
         void greet(string greeting);
-        void keepalive();
         void newMessage(Message msg);
         void newMultipleMessages(Messages msgs);
         void userJoined(string room, string login);
-        void userLeaved(string room, string login);
+        void userLeft(string room, string login);
     };
     
     interface Room {
