@@ -13,6 +13,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -53,6 +55,8 @@ public class RoomManager implements ServantLocator {
     private File dbRoot;
     private String listFile = "list";
     
+    private long evictionDelay = 5000;
+    
     private static final String PREFIX = "[Chat] ";
     
     
@@ -67,35 +71,7 @@ public class RoomManager implements ServantLocator {
             System.err.println(PREFIX + "Error while reading room database");
             throw new RuntimeException(e);
         }
-        sessions.addSessionListener(new SessionListener<BiSession>() {
-            @Override
-            public void sessionRemoved(BiSession session, RemovalReason reason) {
-                String user  = session.getUser();
-                Set<String> userRooms;
-                System.out.printf("%sUser %s is gone, removing from rooms " + 
-                        "(%s)\n", PREFIX, user, reason);
-                usersLock.lock();
-                try {
-                    if (users.containsKey(user)) {
-                        userRooms = users.get(user);
-                        activeRoomsLock.lock();
-                        try {
-                            for (String roomName: userRooms) {
-                                RoomImpl room = activeRooms.get(roomName);
-                                if (room == null) {
-                                    room = activateRoom(roomName);
-                                }
-                                room.userSessionTerminated(session, reason);
-                            }
-                        } finally {
-                            activeRoomsLock.unlock();
-                        }
-                    }
-                } finally {
-                    usersLock.unlock();
-                }
-            }
-        });
+        sessions.addSessionListener(new SessionCallback());
         if (rooms.isEmpty()) {
             System.out.println("Adding test room...");
             try {
@@ -103,6 +79,57 @@ public class RoomManager implements ServantLocator {
             } catch (CannotCreateRoom e) {
                 e.printStackTrace();
             }
+        }
+    }
+    
+    private class SessionCallback implements SessionListener<BiSession> {
+        @Override
+        public void sessionRemoved(BiSession session, RemovalReason reason) {
+            String user  = session.getUser();
+            Set<String> userRooms;
+            System.out.printf("%sUser %s is gone, removing from rooms " + 
+                    "(%s)\n", PREFIX, user, reason);
+            usersLock.lock();
+            try {
+                if (users.containsKey(user)) {
+                    userRooms = users.get(user);
+                    activeRoomsLock.lock();
+                    try {
+                        for (String roomName: userRooms) {
+                            RoomImpl room = activeRooms.get(roomName);
+                            if (room == null) {
+                                room = activateRoom(roomName);
+                            }
+                            notifyTermination(room, session, reason);
+                        }
+                    } finally {
+                        activeRoomsLock.unlock();
+                    }
+                }
+            } finally {
+                usersLock.unlock();
+            }
+        }
+    }
+    
+    private void notifyTermination(final RoomImpl room, BiSession session, 
+            RemovalReason reason) {
+        room.userSessionTerminated(session, reason);
+        // If this was the last user, consider freeing the resources
+        if (room.isEmpty()) {
+            new Timer().schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    activeRoomsLock.lock();
+                    try {
+                        if (room.isEmpty()) {
+                            evict(room);
+                        }
+                    } finally {
+                        activeRoomsLock.unlock();
+                    }
+                }
+            }, evictionDelay);
         }
     }
     
@@ -118,6 +145,25 @@ public class RoomManager implements ServantLocator {
             dir = ".chatdb/rooms";
         }
         dbRoot = new File(dir);
+        System.out.printf(PREFIX + "   Database location: %s\n", dir);
+        
+        evictionDelay = tryParseValue("ChatApp.Rooms.EvictionDelay", 5000);
+        System.out.printf(PREFIX + "   Eviction delay: %d ms\n",
+                evictionDelay);
+    }
+    
+    protected int tryParseValue(String prop, int defaultValue) {
+        String val = config.get(prop);
+        if (val != null) {
+            try {
+                return Integer.valueOf(val);
+            } catch (NumberFormatException e) {
+                System.out.printf(PREFIX + "   (invalid value '%s')'n", val);
+                return defaultValue;
+            }
+        } else {
+            return defaultValue;
+        }
     }
     
     /*
@@ -197,6 +243,15 @@ public class RoomManager implements ServantLocator {
             return room;
         } finally {
             activeRoomsLock.unlock();
+        }
+    }
+    
+    private void evict(RoomImpl room) {
+        String name = room.getName();
+        if (activeRooms.containsKey(name)) {
+            System.out.println(PREFIX + "Evicting room " + name + 
+                    " servant");
+            activeRooms.remove(name);
         }
     }
     

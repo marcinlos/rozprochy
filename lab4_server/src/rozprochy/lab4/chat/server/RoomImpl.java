@@ -54,6 +54,16 @@ public class RoomImpl extends _RoomDisp {
             }
         }
     }
+    
+    public boolean isEmpty() {
+        synchronized (users) {
+            return users.isEmpty();
+        }
+    }
+    
+    public void deactivate() {
+        System.out.println(prefix + "Deactivation");
+    }
 
     @Override
     public void join(String sessionId, Current __current)
@@ -187,9 +197,31 @@ public class RoomImpl extends _RoomDisp {
             try {
                 throw ex;
             } catch (Ice.SocketException e) {
-                System.err.println("Socket exc");
+                System.out.println(prefix + "User " + user + " has " + 
+                        "connection problems, arranging for retry");
+                arrangeRetry();
             } catch (Ice.TimeoutException e) {
-                System.err.println("Timeout exc");
+                System.out.println(prefix + "User " + user + " has " + 
+                        "socket timeout problems, arranging for retry");
+                arrangeRetry();
+            }
+        }
+        
+        private void arrangeRetry() {
+            try {
+                BiSession s = sessions.getSessionByUser(user);
+                s.addRecoveryListener(new SessionRecoveryListener() {
+                    @Override
+                    public void sessionRecovered(BiSession session) {
+                        System.out.println(prefix + "User " + user + 
+                                "has recovered, resending...");
+                        notifyAboutMessage(message, user);
+                    }
+                });
+            } catch (SessionExpired e) {
+                // Swallow, nothing extraordinary
+                System.out.printf("%sSession expired, no further resend " +
+                        "attempts (user=%s)\n", prefix, user);
             }
         }
     }

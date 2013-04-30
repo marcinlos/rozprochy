@@ -44,6 +44,7 @@ public class Client extends Ice.Application {
     private SystemManagerPrx chat;
     private volatile String sessionId;
     private String roomName;
+    private volatile boolean pingOk = true;
     
     private ObjectAdapter adapter;
     private _MemberDisp callback;
@@ -61,7 +62,7 @@ public class Client extends Ice.Application {
     @Override
     public int run(String[] args) {
         loadProperties();
-        ObjectPrx obj = makePrx(managerName);
+        ObjectPrx obj = makePrx(managerName).ice_timeout(1000);
         System.out.print("Obtaining chat reference...");
         System.out.flush();
         try {
@@ -94,14 +95,18 @@ public class Client extends Ice.Application {
         String uuid = UUID.randomUUID().toString();
         Identity id = communicator().stringToIdentity(uuid);
         callback = new Callback();
-        ObjectPrx obj = adapter.add(callback, id);
+        ObjectPrx obj = adapter.add(callback, id).ice_timeout(5000);
         MemberPrx proxy = MemberPrxHelper.uncheckedCast(obj);
         adapter.activate();
         chat.ice_getConnection().setAdapter(adapter);
         try {
+            System.out.printf("Established bidir connection with timeout=%d ms\n",
+                    chat.ice_getConnection().timeout());
+            System.out.println(chat.ice_getConnection());
             chat.setCallback(sessionId, proxy);
         } catch (SessionException e) {
-            System.err.println("Invalid session"); 
+            System.err.println("Invalid session");
+            printPrompt();
             invalidateSession();
         }
     }
@@ -112,16 +117,30 @@ public class Client extends Ice.Application {
             @Override
             public void run() {
                 if (sessionId != null) {
+                    boolean wasOk = pingOk;
                     try {
+                        pingOk = false;
                         chat.keepalive(sessionId);
+                        pingOk = true;
+                        if (! wasOk) {
+                            System.out.println("\rConnection reestablished");
+                            printPrompt();
+                        }
+                    } catch (Ice.TimeoutException e) {
+                        System.err.println("\rConnection problem (timeout)");
+                        printPrompt();
                     } catch (Ice.ConnectFailedException e) {
-                        System.err.println("Connection failed: " + e.getMessage());
+                        System.err.println("\rConnection failed: " + e.getMessage());
+                        printPrompt();
                     } catch (SessionException e) {
-                        System.err.println("Ping: Invalid session"); 
+                        System.err.println("\rPing: Invalid session"); 
+                        System.err.println("Please log in");
+                        printPrompt();
                         invalidateSession();
+                        pingOk = true;
                     } catch (NeedForRecovery e) {
-                        // TODO Send recovery message 
-                        e.printStackTrace();
+                        System.out.println("\rNeed to reestablish connection");
+                        createCallback();
                     } 
                 }
             }
@@ -313,6 +332,9 @@ public class Client extends Ice.Application {
                         RoomPrx room = getRoom(name);
                         room.join(sessionId);
                         System.out.println("Joined");
+                        if (roomName == null) {
+                            roomName = name;
+                        }
                     } catch (NoSuchElementException e) {
                         System.err.println("Usage: join <name>");
                     } catch (SessionException e) {

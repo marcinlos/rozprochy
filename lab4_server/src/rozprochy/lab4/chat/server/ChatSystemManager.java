@@ -7,6 +7,7 @@ import rozprochy.lab4.util.Crypto;
 import Chat.CannotCreateRoom;
 import Chat.MemberPrx;
 import Chat.MemberPrxHelper;
+import Chat.NeedForRecovery;
 import Chat._SystemManagerDisp;
 import Ice.Current;
 import Ice.Identity;
@@ -78,8 +79,12 @@ public class ChatSystemManager extends _SystemManagerDisp {
 
     @Override
     public void keepalive(String sessionId, Current __current)
-            throws SessionException {
-        sessions.keepalive(sessionId);
+            throws SessionException, NeedForRecovery {
+        try {
+            sessions.keepalive(sessionId);
+        } catch (InvalidCallbackException e) {
+            throw new NeedForRecovery();
+        }
     }
 
     @Override
@@ -96,6 +101,9 @@ public class ChatSystemManager extends _SystemManagerDisp {
         ObjectPrx obj = __current.con.createProxy(id);
         MemberPrx cb = MemberPrxHelper.uncheckedCast(obj);
         sessions.addCallback(sessionId, cb);
+        System.out.printf("%sEstablished bidir connection with timeout=%d ms\n",
+                PREFIX, obj.ice_getConnection().timeout());
+        System.out.println("Connection=" + obj.ice_getConnection());
         cb.greet("Welcomeeeee");
     }
 
