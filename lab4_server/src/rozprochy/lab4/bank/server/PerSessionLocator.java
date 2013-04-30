@@ -34,11 +34,12 @@ public class PerSessionLocator implements ServantLocator {
         this.sessions = sessions;
         this.accounts = accounts;
         //this.config = config;
-        sessions.addSessionListener(new SessionListener() {
+        sessions.addSessionListener(new SessionListener<Session>() {
             @Override
-            public void sessionRemoved(String sid, RemovalReason reason) {
+            public void sessionRemoved(Session session, RemovalReason reason) {
                 lock.lock();
                 try {
+                    String sid = session.getId();
                     servantMap.remove(sid);
                     System.out.printf("Servant removed (sid=%s)\n", sid);
                 } finally {

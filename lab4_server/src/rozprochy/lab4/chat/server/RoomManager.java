@@ -1,20 +1,26 @@
 package rozprochy.lab4.chat.server;
 
+import static rozprochy.lab4.util.IOExceptionWrapper.wrapIO;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.Date;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
+import rozprochy.lab4.generic.RemovalReason;
+import rozprochy.lab4.generic.SessionListener;
+import rozprochy.lab4.util.IOExceptionWrapper;
 import Chat.CannotCreateRoom;
 import Chat.InvalidRoomName;
-import Chat.Message;
 import Chat.RoomAlreadyExists;
 import Ice.Current;
 import Ice.LocalObjectHolder;
@@ -30,10 +36,18 @@ public class RoomManager implements ServantLocator {
     // Rooms currently active (servants exist)
     private Map<String, RoomImpl> activeRooms = new HashMap<String, RoomImpl>();
     
+    // Lock guarding active rooms map
+    private Lock activeRoomsLock = new ReentrantLock();
+    
     // Map with activeRooms each player is subscribed to
     private Map<String, Set<String>> users = new HashMap<String, Set<String>>();
     
+    // Lock guarding user->rooms map
+    private Lock usersLock = new ReentrantLock();
+    
     private Map<String, String> config;
+    
+    private BiSessionManager sessions;
 
     /** Root directory of a room database */
     private File dbRoot;
@@ -42,8 +56,9 @@ public class RoomManager implements ServantLocator {
     private static final String PREFIX = "[Chat] ";
     
     
-    public RoomManager(Map<String, String> config) {
+    public RoomManager(Map<String, String> config, BiSessionManager sessions) {
         this.config = config;
+        this.sessions = sessions;
         System.out.println(PREFIX + "Initiating room manager");
         loadConfig();
         try {
@@ -52,6 +67,35 @@ public class RoomManager implements ServantLocator {
             System.err.println(PREFIX + "Error while reading room database");
             throw new RuntimeException(e);
         }
+        sessions.addSessionListener(new SessionListener<BiSession>() {
+            @Override
+            public void sessionRemoved(BiSession session, RemovalReason reason) {
+                String user  = session.getUser();
+                Set<String> userRooms;
+                System.out.printf("%sUser %s is gone, removing from rooms " + 
+                        "(%s)\n", PREFIX, user, reason);
+                usersLock.lock();
+                try {
+                    if (users.containsKey(user)) {
+                        userRooms = users.get(user);
+                        activeRoomsLock.lock();
+                        try {
+                            for (String roomName: userRooms) {
+                                RoomImpl room = activeRooms.get(roomName);
+                                if (room == null) {
+                                    room = activateRoom(roomName);
+                                }
+                                room.userSessionTerminated(session, reason);
+                            }
+                        } finally {
+                            activeRoomsLock.unlock();
+                        }
+                    }
+                } finally {
+                    usersLock.unlock();
+                }
+            }
+        });
         if (rooms.isEmpty()) {
             System.out.println("Adding test room...");
             try {
@@ -98,7 +142,7 @@ public class RoomManager implements ServantLocator {
     /*
      * Actually reads the file containing room names, and fills room set.
      */
-    void readRoomList(File list) {
+    private void readRoomList(File list) {
         Scanner scanner = null;
         try {
             scanner = new Scanner(list);
@@ -111,6 +155,7 @@ public class RoomManager implements ServantLocator {
             }
         } catch (FileNotFoundException e) {
             System.err.println(PREFIX + "List deleted before read");
+            throw wrapIO(e);
         } finally {
             if (scanner != null) {
                 scanner.close();
@@ -128,11 +173,30 @@ public class RoomManager implements ServantLocator {
                 rooms.add(name);
                 addRoomToList(name);
                 try {
-                    RoomDatabase room = new RoomDatabase(dbRoot, name);
-                } catch (IOException e) {
+                    new RoomDatabase(dbRoot, name);
+                } catch (IOExceptionWrapper e) {
                     throw new CannotCreateRoom(e);
                 }
             }
+        }
+    }
+    
+    public List<String> getRoomList() {
+        synchronized (rooms) {
+            return new ArrayList<String>(rooms);
+        }
+    }
+    
+    private RoomImpl activateRoom(String name) {
+        activeRoomsLock.lock();
+        try {
+            System.out.println(PREFIX + "Activating room " + name);
+            RoomDatabase db = new RoomDatabase(dbRoot, name);
+            RoomImpl room = new RoomImpl(name, this, db, sessions);
+            activeRooms.put(name, room);
+            return room;
+        } finally {
+            activeRoomsLock.unlock();
         }
     }
     
@@ -144,7 +208,7 @@ public class RoomManager implements ServantLocator {
             out.write(name + "\n");
         } catch (IOException e) {
             System.err.println(PREFIX + "Error while adding room to room list");
-            throw new RuntimeException(e);
+            throw wrapIO(e);
         } finally {
             if (out != null) {
                 try {
@@ -167,46 +231,67 @@ public class RoomManager implements ServantLocator {
     
     
     public void addUserRoom(String user, String room) {
-        synchronized (users) {
+        usersLock.lock();
+        try {
             Set<String> set = users.get(user);
             if (set == null) {
                 set = new HashSet<String>();
             }
             set.add(room);
             users.put(user, set);
+        } finally {
+            usersLock.unlock();
         }
     }
     
     
     public void removeUserRoom(String user, String room) {
-        synchronized (user) {
+        usersLock.lock();
+        try {
             Set<String> set = users.get(user);
             if (set == null) {
                 set = new HashSet<String>();
             }
             set.remove(room);
             users.put(user, set);
+        } finally {
+            usersLock.unlock();
         }
     }
 
     @Override
     public Object locate(Current curr, LocalObjectHolder cookie)
             throws UserException {
-        // TODO Auto-generated method stub
-        return null;
+        activeRoomsLock.lock();
+        try {
+            String name = curr.id.name;
+            System.out.println(PREFIX + "Looking for room " + name + "...");
+            if (activeRooms.containsKey(name)) {
+                return activeRooms.get(name);
+            } else {
+                synchronized (rooms) {
+                    if (rooms.contains(curr.id.name)) {
+                        RoomImpl room = activateRoom(name);
+                        return room;
+                    } else {
+                        return null;
+                    }
+                }
+            }
+        } finally {
+            activeRoomsLock.unlock();
+        }
     }
 
     @Override
     public void finished(Current curr, Object servant, java.lang.Object cookie)
             throws UserException {
-        // TODO Auto-generated method stub
-        
+        // empty
     }
 
     @Override
     public void deactivate(String category) {
-        // TODO Auto-generated method stub
-        
+        // empty
     }
 
 }

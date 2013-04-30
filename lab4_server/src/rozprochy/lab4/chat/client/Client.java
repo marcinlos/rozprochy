@@ -1,6 +1,8 @@
 package rozprochy.lab4.chat.client;
 
 import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
 import java.util.Timer;
@@ -13,6 +15,9 @@ import Chat.MemberPrx;
 import Chat.MemberPrxHelper;
 import Chat.Message;
 import Chat.NeedForRecovery;
+import Chat.NotAMember;
+import Chat.RoomPrx;
+import Chat.RoomPrxHelper;
 import Chat.SystemManagerPrx;
 import Chat.SystemManagerPrxHelper;
 import Chat._MemberDisp;
@@ -34,6 +39,7 @@ public class Client extends Ice.Application {
 
     private SystemManagerPrx chat;
     private volatile String sessionId;
+    private String roomName;
     
     private ObjectAdapter adapter;
     private _MemberDisp callback;
@@ -46,7 +52,14 @@ public class Client extends Ice.Application {
     
     private String prompt = "> ";
     
-    private static final int PING_PERIOD = 1500;
+    private static final int PING_PERIOD = 5000;
+    
+    // Colors
+    private static final String CONSOLE_RESET = "\u001B[0m";
+    private static final String CONSOLE_RED   = "\u001B[1;31m";
+    private static final String CONSOLE_WHITE   = "\u001B[1;37m";
+    private static final String CONSOLE_GREEN   = "\u001B[1;32m";
+    private static final String CONSOLE_YELLOW   = "\u001B[1;33m";
     
     
     @Override
@@ -93,16 +106,22 @@ public class Client extends Ice.Application {
             }
             @Override
             public void newMultipleMessages(Message[] msgs, Current __current) {
+                for (Message msg: msgs) {
+                    printMessage(msg);
+                }
+                printPrompt();
             }
             @Override
             public void newMessage(Message msg, Current __current) {
+                printMessage(msg);
+                printPrompt();
             }
             @Override
             public void keepalive(Current __current) {
             }
             @Override
             public void greet(String greeting, Current __current) {
-                System.out.println("Greeting received: " + greeting);
+                System.out.println(greeting);
             }
         };
         ObjectPrx obj = adapter.add(callback, id);
@@ -112,7 +131,8 @@ public class Client extends Ice.Application {
         try {
             chat.setCallback(sessionId, proxy);
         } catch (SessionException e) {
-            System.err.println("Session fucked up");
+            System.err.println("Invalid session"); 
+            invalidateSession();
         }
     }
     
@@ -127,7 +147,8 @@ public class Client extends Ice.Application {
                     } catch (Ice.ConnectFailedException e) {
                         System.err.println("Connection failed: " + e.getMessage());
                     } catch (SessionException e) {
-                        System.err.println("Pinger: session exception");
+                        System.err.println("Ping: Invalid session"); 
+                        invalidateSession();
                     } catch (NeedForRecovery e) {
                         // TODO Send recovery message 
                         e.printStackTrace();
@@ -141,20 +162,19 @@ public class Client extends Ice.Application {
         String str = prefix + "/" + name + chatEndpoint;
         return communicator().stringToProxy(str);
     }
-
-    /*
-    private AccountPrx getAccount() {
-        if (sessionId != null) {
-            ObjectPrx proxy = makePrx(sessionId);
-            return AccountPrxHelper.checkedCast(proxy);
-        } else {
-            return null;
-        }
-    }
-    */
     
     private void invalidateSession() {
         sessionId = null;
+    }
+    
+    private RoomPrx getRoom(String name) {
+        if (sessionId != null) {
+            String str = "Room/" + name + chatEndpoint;
+            ObjectPrx proxy = communicator().stringToProxy(str);
+            return RoomPrxHelper.checkedCast(proxy);
+        } else {
+            return null;
+        }
     }
     
     private abstract class IceCommand implements Command {
@@ -177,6 +197,9 @@ public class Client extends Ice.Application {
     }
     
     private void printPrompt() {
+        if (roomName != null) {
+            System.out.print(roomName);
+        }
         System.out.print(prompt);
         System.out.flush();
     }
@@ -244,6 +267,163 @@ public class Client extends Ice.Application {
                 return true;
             }
         });
+        cli.registerHandler("rooms", new IceCommand() {
+            @Override public boolean doExecute(String cmd, Scanner input) {
+                if (checkLogged()) {
+                    try {
+                        String[] rooms = chat.getRooms(sessionId);
+                        System.out.println("Available rooms:");
+                        for (String room: rooms) {
+                            System.out.println("   " + room);
+                        }
+                    } catch (SessionException e) {
+                        System.err.println("Invalid session"); 
+                        invalidateSession();
+                    }
+                }
+                printPrompt();
+                return true;
+            }
+        });
+        cli.registerHandler("join", new IceCommand() {
+            @Override public boolean doExecute(String cmd, Scanner input) {
+                if (checkLogged()) {
+                    try {
+                        String name = input.next();
+                        System.out.println("Attempting to join " + name + "...");
+                        RoomPrx room = getRoom(name);
+                        room.join(sessionId);
+                        System.out.println("Joined");
+                    } catch (NoSuchElementException e) {
+                        System.err.println("Usage: join <name>");
+                    } catch (SessionException e) {
+                        System.err.println("Invalid session"); 
+                        invalidateSession();
+                    } catch (Ice.ObjectNotExistException e) {
+                        System.err.println("Room does not exist");
+                    }
+                }
+                printPrompt();
+                return true;
+            }
+        });
+        cli.registerHandler("leave", new IceCommand() {
+            @Override public boolean doExecute(String cmd, Scanner input) {
+                if (checkLogged()) {
+                    try {
+                        String name = input.next();
+                        System.out.println("Leaving " + name + "...");
+                        RoomPrx room = getRoom(name);
+                        room.leave(sessionId);
+                        System.out.println("Left");
+                    } catch (NoSuchElementException e) {
+                        System.err.println("Usage: leave <name>");
+                    } catch (SessionException e) {
+                        System.err.println("Invalid session"); 
+                        invalidateSession();
+                    } catch (NotAMember e) {
+                        System.err.println("Wasn't a member of this room");
+                    } catch (Ice.ObjectNotExistException e) {
+                        System.err.println("Room does not exist");
+                    } 
+                }
+                printPrompt();
+                return true;
+            }
+        });
+        cli.registerHandler("msg", new IceCommand() {
+            @Override public boolean doExecute(String cmd, Scanner input) {
+                if (checkLogged()) {
+                    try {
+                        String name = input.next();
+                        if (input.hasNextLine()) {
+                            RoomPrx room = getRoom(name);
+                            room.sendMessage(sessionId, input.nextLine());
+                        }
+                    } catch (NoSuchElementException e) {
+                        System.err.println("Usage: msg <room> <text...>");
+                    } catch (SessionException e) {
+                        System.err.println("Invalid session"); 
+                        invalidateSession();
+                    } catch (NotAMember e) {
+                        System.err.println("Wasn't a member of this room");
+                    } catch (Ice.ObjectNotExistException e) {
+                        System.err.println("Room does not exist");
+                    } 
+                }
+                printPrompt();
+                return true;
+            }
+        });
+        cli.registerHandler("room", new IceCommand() {
+            @Override public boolean doExecute(String cmd, Scanner input) {
+                if (checkLogged()) {
+                    try {
+                        roomName = input.next();
+                    } catch (NoSuchElementException e) {
+                        System.err.println("Usage: room <name>");
+                    }
+                }
+                printPrompt();
+                return true;
+            }
+        });
+        cli.registerHandler("fetch", new IceCommand() {
+            @Override public boolean doExecute(String cmd, Scanner input) {
+                if (checkLogged()) {
+                    try {
+                        String name = input.next();
+                        long since = 0;
+                        if (input.hasNextLong()) {
+                            since = input.nextLong();
+                        }
+                        RoomPrx room = getRoom(name);
+                        Message[] msgs = room.fetchMessages(since);
+                        for (Message m: msgs) {
+                            printMessage(m);
+                        }
+                    } catch (NoSuchElementException e) {
+                        System.err.println("Usage: msg <room> <text...>");
+                    } catch (SessionException e) {
+                        System.err.println("Invalid session"); 
+                        invalidateSession();
+                    } catch (NotAMember e) {
+                        System.err.println("Wasn't a member of this room");
+                    } catch (Ice.ObjectNotExistException e) {
+                        System.err.println("Room does not exist");
+                    } 
+                }
+                printPrompt();
+                return true;
+            }
+        });
+        cli.setDefaultHandler(new IceCommand() {
+            @Override public boolean doExecute(String cmd, Scanner input) {
+                if (checkLogged()) {
+                    if (roomName != null) {
+                        try {
+                            String message = cmd;
+                            if (input.hasNextLine()) {
+                                message += input.nextLine();
+                            }
+                            RoomPrx room = getRoom(roomName);
+                            room.sendMessage(sessionId, message);
+                        } catch (SessionException e) {
+                            System.err.println("Invalid session"); 
+                            invalidateSession();
+                        } catch (NotAMember e) {
+                            System.err.println("Wasn't a member of this room");
+                        } catch (Ice.ObjectNotExistException e) {
+                            System.err.println("Room does not exist");
+                        } 
+                    } else {
+                        System.err.println("No room choosen");
+                    }
+                }
+                printPrompt();
+                return true;
+            }
+        });
         printPrompt();
         cli.run();
     }
@@ -260,13 +440,22 @@ public class Client extends Ice.Application {
         }
     }
     
+    private void printMessage(Message message) {
+        Date date = new Date(message.timestamp);
+        SimpleDateFormat df = new SimpleDateFormat("hh:mm:ss");
+        String dateStr = df.format(date);
+        String text = String.format("\r%s[%s] %s %s%s %s", CONSOLE_GREEN,
+                message.room, dateStr, message.author, CONSOLE_RESET,
+                message.content);
+        System.out.println(text);
+    }
+    
     private void exitGracefully() {
         System.out.print('\r');
         System.out.flush();
         timer.cancel();
         if (sessionId != null) {
             try {
-                System.out.println("Quitting....");
                 chat.logout(sessionId);
                 adapter.destroy();
             } catch (SessionException e) {

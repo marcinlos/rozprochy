@@ -15,7 +15,7 @@ public class CommandInterpreter extends AbstractCLI {
     private Map<String, Command> handlers = new HashMap<String, Command>();
 
     /* Default handler, used for missing commands */
-    private final Command defaultHandler = new Command() {
+    private Command defaultHandler = new Command() {
         @Override
         public boolean execute(String name, Scanner input) {
             return missingCommand(name, input);
@@ -50,6 +50,15 @@ public class CommandInterpreter extends AbstractCLI {
      */
     public void registerHandler(String name, Command handler) {
         handlers.put(name, handler);
+    }
+    
+    /**
+     * Registers custom default handler.
+     * 
+     * @param handler handler to be used as a default
+     */
+    public void setDefaultHandler(Command handler) {
+        defaultHandler = handler;
     }
 
     /**

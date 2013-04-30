@@ -1,14 +1,12 @@
 package rozprochy.lab4.chat.server;
 
-import java.io.ByteArrayOutputStream;
-import java.io.EOFException;
+import static rozprochy.lab4.util.IOExceptionWrapper.wrapIO;
 import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
 import java.io.RandomAccessFile;
-import java.io.Serializable;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
@@ -25,7 +23,6 @@ import Chat.Message;
 
 public class RoomDatabase {
 
-    private File root;
     private String name;
     private File base;
 
@@ -39,17 +36,21 @@ public class RoomDatabase {
     
     private static final String PREFIX = "[Chat] ";
     
-    public RoomDatabase(File root, String name) throws IOException {
-        this.root = root;
+    public RoomDatabase(File root, String name) {
         this.name = name;
         base = new File(root, name);
         index = new File(base, INDEX);
         msgs = new File(base, MSGS);
-        users = new DiskMap<Long>(base);
-        if (index.createNewFile()) {
-            msgs.createNewFile();
-            System.out.println(PREFIX + " (Room " + name + ") Creating new " +
-                    "room database");
+        try {
+            users = new DiskMap<Long>(base);
+            if (index.createNewFile()) {
+                msgs.createNewFile();
+                System.out.println(PREFIX + " (Room " + name + ") Creating new " +
+                        "room database");
+            }
+        } catch (IOException e) {
+            System.err.println(PREFIX + "Error while initialising database");
+            throw wrapIO(e);
         }
     }
     
@@ -68,7 +69,7 @@ public class RoomDatabase {
             output.close();
         } catch (IOException e) {
             System.err.println(PREFIX + "Error while saving message");
-            throw new RuntimeException(e);
+            throw wrapIO(e);
         } finally {
             if (file != null) {
                 try {
@@ -84,7 +85,7 @@ public class RoomDatabase {
     /*
      * Returns -1 if id is out of range
      */
-    private long offsetOf(long id) throws IOException {
+    private long offsetOf(long id) {
         RandomAccessFile file = null;
         try {
             file = new RandomAccessFile(index, "r");
@@ -93,17 +94,19 @@ public class RoomDatabase {
             }
             file.seek(id * 8);
             return file.readLong();
+        } catch (IOException e) {
+            throw wrapIO(e);
         } finally {
             try {
                 file.close();
             } catch (IOException e) {
-                System.err.println(PREFIX + "(Room " + name + 
-                        ") Error while reading messages");
+                System.err.println(PREFIX + "(Room " + name + ") Error " +
+                        "while reading messages");
             }
         }
     }
     
-    public synchronized Message readMessage(long id) throws IOException {
+    public synchronized Message readMessage(long id) {
         long pos = offsetOf(id);
         if (pos == -1) {
             return null;
@@ -123,6 +126,8 @@ public class RoomDatabase {
                             "Database corrupted");
                     throw new RuntimeException(e);
                 }
+            } catch (IOException e) {
+                throw wrapIO(e);
             } finally {
                 try {
                     file.close();
@@ -134,7 +139,7 @@ public class RoomDatabase {
         }
     }
     
-    public synchronized List<Message> readSince(long id) throws IOException {
+    public synchronized Message[] readSince(long id) {
         List<Message> messages = new ArrayList<Message>();
         while (true) {
             Message msg = readMessage(id ++);
@@ -144,7 +149,7 @@ public class RoomDatabase {
                 break;
             }
         }
-        return messages;
+        return messages.toArray(new Message[0]);
     }
     
     private long addToIndex(long pos) {
@@ -161,8 +166,8 @@ public class RoomDatabase {
             try {
                 file.close();
             } catch (IOException e) {
-                System.err.println(PREFIX + "(Room " + name + 
-                        ") Error while updating index");
+                System.err.println(PREFIX + "(Room " + name + ") Error " + 
+                        "while updating index");
             }
         }
     }
@@ -176,6 +181,23 @@ public class RoomDatabase {
     public void removeUser(String user) {
         synchronized (users) {
             users.remove(user);
+        }
+    }
+    
+    public boolean userExists(String user) {
+        synchronized (users) {
+            return users.containsKey(user);
+        }
+    }
+    
+    public Message[] getPending(String user) {
+        synchronized (users) {
+            if (users.containsKey(user)) {
+                long id = users.get(user);
+                return readSince(id + 1);
+            } else {
+                return null;
+            }
         }
     }
 

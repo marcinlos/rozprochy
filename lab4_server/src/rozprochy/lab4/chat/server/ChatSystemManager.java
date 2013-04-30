@@ -24,7 +24,7 @@ public class ChatSystemManager extends _SystemManagerDisp {
     private BiSessionManager sessions;
     private RoomManager rooms;
     
-    private ObjectAdapter adapter;
+    //private ObjectAdapter adapter;
     private Map<String, String> config;
     
     private static final String PREFIX = "[Chat] ";
@@ -32,27 +32,12 @@ public class ChatSystemManager extends _SystemManagerDisp {
     public ChatSystemManager(ObjectAdapter adapter, 
             Map<String, String> config) {
         this.config = config;
-        this.adapter = adapter;
+        //this.adapter = adapter;
         accounts = new AccountManager("Chat", this.config);
         sessions = new BiSessionManager("ChatApp", this.config);
         
-        rooms = new RoomManager(config);
-        
-        /*
-        String locatorType = config.get("BankApp.Locator");
-        if (locatorType == null) {
-            System.out.println("Locator type unspecified, using default");
-        }
-        try {
-            ServantLocator locator = LocatorFactory.newInstance(locatorType, 
-                    sessions, accounts, config);
-            this.adapter.addServantLocator(locator, "");
-            System.out.println("Created locator '" + locatorType + "'");
-        } catch (UnknownLocatorType e) {
-            System.err.println("Unknown locator type: '" + locatorType + "'");
-            throw new RuntimeException(e);
-        }
-        */
+        rooms = new RoomManager(config, sessions);
+        adapter.addServantLocator(rooms, "Room");
     }
 
     @Override
@@ -66,7 +51,7 @@ public class ChatSystemManager extends _SystemManagerDisp {
     @Override
     public synchronized String login(String login, String password,
             Current __current) throws LoginException, DbError {
-        System.out.printf("PREFIX + Login attempt (user=%s, pwd=%s)\n", 
+        System.out.printf(PREFIX + "Login attempt (user=%s, pwd=%s)\n", 
                 login, password);
         if (accounts.authenticate(login, password)) {
             String sid = Crypto.createSessionId();
@@ -100,7 +85,7 @@ public class ChatSystemManager extends _SystemManagerDisp {
     @Override
     public String[] getRooms(String sessionId, Current __current)
             throws SessionException {
-        return new String[] { "Aleph", "Beth", "Gimmel" };
+        return rooms.getRoomList().toArray(new String[0]);
     }
 
     @Override

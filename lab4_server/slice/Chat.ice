@@ -74,8 +74,7 @@ module Chat {
     };
     
     interface Room {
-        void join(string sessionId, Member* callback) 
-            throws Users::SessionException;
+        void join(string sessionId) throws Users::SessionException;
             
         void leave(string sessionId) throws Users::SessionException, NotAMember;
         

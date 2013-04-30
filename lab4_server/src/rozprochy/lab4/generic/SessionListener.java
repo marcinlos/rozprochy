@@ -6,14 +6,14 @@ package rozprochy.lab4.generic;
  * 
  * @author los
  */
-public interface SessionListener {
+public interface SessionListener<T extends Session> {
     
     /**
      * Invoked for each session removed at the session manager.
      * 
-     * @param sid id of the removed session
+     * @param removed session
      * @param reason Why was the session removed
      */
-    void sessionRemoved(String sid, RemovalReason reason);
+    void sessionRemoved(T session, RemovalReason reason);
     
 }

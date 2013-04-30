@@ -27,7 +27,8 @@ public class SessionManager<T extends Session> {
     
     private Map<String, String> config;
     private Thread sessionEvictor;
-    private List<SessionListener> listeners = new ArrayList<SessionListener>();
+    private List<SessionListener<T>> listeners = 
+            new ArrayList<SessionListener<T>>();
     
     private String prefix;
     private String confPrefix;
@@ -66,7 +67,7 @@ public class SessionManager<T extends Session> {
         }
     }
     
-    public void addSessionListener(SessionListener listener) {
+    public void addSessionListener(SessionListener<T> listener) {
         synchronized (listeners) {
             listeners.add(listener);
         }
@@ -138,7 +139,7 @@ public class SessionManager<T extends Session> {
                 System.out.printf(prefix + "Session terminated (user=%s, " + 
                         "sid=%s)\n   reason: %s\n", pesel, sid, 
                         reason.toString());
-                informAboutRemoval(sid, reason);
+                informAboutRemoval(session, reason);
                 return true;
             } else {
                 throw new InvalidSession();
@@ -175,10 +176,10 @@ public class SessionManager<T extends Session> {
         }
     }
     
-    private void informAboutRemoval(String sid, RemovalReason reason) {
+    private void informAboutRemoval(T session, RemovalReason reason) {
         synchronized (listeners) {
-            for (SessionListener listener: listeners) {
-                listener.sessionRemoved(sid, reason);
+            for (SessionListener<T> listener: listeners) {
+                listener.sessionRemoved(session, reason);
             }
         }
     }
