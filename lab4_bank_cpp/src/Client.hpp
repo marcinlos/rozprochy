@@ -38,6 +38,8 @@ private:
     std::string prompt;
 
     std::string session_id;
+    std::string login;
+    Ice::Context ctx;
 
     void load_properties_();
     void create_pinger_();

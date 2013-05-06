@@ -68,10 +68,10 @@ Ice::ObjectPrx Client::make_prx_(const std::string& name) const
 
 Bank::AccountPrx Client::get_account_() const
 {
-    if (! session_id.empty())
+    if (! login.empty())
     {
-        Ice::ObjectPrx proxy = make_prx_(session_id);
-        return Bank::AccountPrx::checkedCast(proxy);
+        Ice::ObjectPrx proxy = make_prx_(login);
+        return Bank::AccountPrx::uncheckedCast(proxy);
     }
     else
     {
@@ -128,7 +128,7 @@ void Client::exit_gracefully_()
     {
         try
         {
-            bank->logout(session_id);
+            get_account_()->logout(ctx);
         }
         catch (const Users::SessionException&)
         {
@@ -140,12 +140,14 @@ void Client::exit_gracefully_()
 void Client::begin_session_(const std::string& sid)
 {
     session_id = sid;
+    ctx["sid"] = sid;
     pinger->startPing(sid);
 }
 
 void Client::session_terminated_()
 {
     session_id.clear();
+    ctx.erase("sid");
     pinger->stopPing();
 }
 
@@ -205,9 +207,9 @@ void Client::login_(std::istream& in)
     try
     {
         Scanner input(in);
-        std::string pesel = input.next();
+        login = input.next();
         std::string password = input.next();
-        std::string sid = bank->login(pesel, password);
+        std::string sid = get_account_()->login(password);
         std::cout << "Logged in, sid=" << sid << std::endl;
         begin_session_(sid);
     }
@@ -239,7 +241,7 @@ void Client::logout_(std::istream& in)
     {
         try
         {
-            bank->logout(session_id);
+            get_account_()->logout(ctx);
             session_terminated_();
         }
         catch (const Users::SessionException&)
@@ -257,7 +259,7 @@ void Client::balance_(std::istream& in)
         try
         {
             Bank::AccountPrx account = get_account_();
-            int balance = account->getBalance();
+            int balance = account->getBalance(ctx);
             std::cout << "Account : " << std::setw(10) << balance
                       << ".00 $" << std::endl;
         }
@@ -286,7 +288,7 @@ void Client::deposit_(std::istream& in)
             Scanner input(in);
             int amount = input.nextInt();
             Bank::AccountPrx account = get_account_();
-            account->deposit(amount);
+            account->deposit(amount, ctx);
         }
         catch (const ParseError&)
         {
@@ -317,7 +319,7 @@ void Client::withdraw_(std::istream& in)
             Scanner input(in);
             int amount = input.nextInt();
             Bank::AccountPrx account = get_account_();
-            account->withdraw(amount);
+            account->withdraw(amount, ctx);
         }
         catch (const ParseError&)
         {

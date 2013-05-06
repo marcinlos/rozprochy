@@ -24,10 +24,10 @@ SLICE = slice2cpp
 
 PROGRAMS = client
 
-client_SRCS = main.cpp Client.cpp Pinger.cpp Users.cpp Bank.cpp
+client_SRCS = main.cpp Client.cpp Pinger.cpp
 
 all_LDFLAGS = -L${ICE_HOME}/lib64 -lIce -lIceUtil -lpthread
-SLICES = Bank.ice
+SLICES = Bank.ice Users.ice
 
 CXXFLAGS=-I${ICE_HOME}/include -I${gendir} -g
 
