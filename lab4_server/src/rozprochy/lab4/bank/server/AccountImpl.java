@@ -1,11 +1,13 @@
 package rozprochy.lab4.bank.server;
 
+import rozprochy.lab4.generic.RemovalReason;
 import rozprochy.lab4.generic.Session;
 import rozprochy.lab4.generic.SessionManager;
 import Bank.OperationException;
 import Bank._AccountDisp;
 import Ice.Current;
 import Users.DbError;
+import Users.LoginException;
 import Users.SessionException;
 import Users.SessionExpired;
 
@@ -25,7 +27,8 @@ public class AccountImpl extends _AccountDisp {
             SessionException, DbError {
         //printRequest(__current);
         //System.out.println("AccountImpl.getBalance()");
-        AccountData acc = getAccount(__current.id.name);
+        String sid = __current.ctx.get("sid");
+        AccountData acc = getAccount(sid);
         int balance = acc.getAmount();
         freeAccount(acc);
         return balance;
@@ -36,7 +39,8 @@ public class AccountImpl extends _AccountDisp {
             throws OperationException, SessionException, DbError {
         //printRequest(__current);
         //System.out.println("AccountImpl.withdraw()");
-        AccountData acc = getAccount(__current.id.name);
+        String sid = __current.ctx.get("sid");
+        AccountData acc = getAccount(sid);
         acc.withdraw(amount);
         freeAccount(acc);
     }
@@ -46,7 +50,8 @@ public class AccountImpl extends _AccountDisp {
             throws OperationException, SessionException, DbError {
         //printRequest(__current);
         //System.out.println("AccountImpl.deposit()");
-        AccountData acc = getAccount(__current.id.name);
+        String sid = __current.ctx.get("sid");
+        AccountData acc = getAccount(sid);
         acc.deposit(amount);
         freeAccount(acc);
     }
@@ -70,5 +75,24 @@ public class AccountImpl extends _AccountDisp {
     private void freeAccount(AccountData account) throws DbError {
         accounts.unlockAccount(account);
     }
+
+    @Override
+    public String login(String password, Current __current) throws DbError,
+            LoginException {
+        throw new LoginException();
+    }
+
+    @Override
+    public void logout(Current __current)
+            throws SessionException {
+        String sid = __current.ctx.get("sid");
+        System.out.printf("[Bank] Logout (sid=%s)\n", sid);
+        synchronized (sessions) {
+            if (sessions.checkSessionActive(sid)) {
+                sessions.removeSession(sid, RemovalReason.LOGGED_OUT);
+            }
+        }
+    }
+    
 
 }

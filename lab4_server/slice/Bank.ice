@@ -15,17 +15,14 @@ module Bank {
     
         void createAccount(string pesel, string password) 
             throws Users::RegisterException, Users::DbError;
-            
-        string login(string pesel, string password) 
-            throws Users::LoginException, Users::DbError;
-            
+
         void keepalive(string sessionId) throws Users::SessionException;
         
-        void logout(string sessionId) throws Users::SessionException; 
-         
     };
+     
+    interface Account {   
     
-    interface Account {
+        string login(string password) throws Users::LoginException, Users::DbError;
     
         int getBalance() throws OperationException, Users::SessionException, 
             Users::DbError;
@@ -35,6 +32,8 @@ module Bank {
             
         void deposit(int amount) throws OperationException, 
             Users::SessionException, Users::DbError;
+            
+        void logout() throws Users::SessionException; 
             
     };
 

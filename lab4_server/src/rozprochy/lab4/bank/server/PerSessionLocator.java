@@ -9,21 +9,11 @@ import rozprochy.lab4.generic.RemovalReason;
 import rozprochy.lab4.generic.Session;
 import rozprochy.lab4.generic.SessionListener;
 import rozprochy.lab4.generic.SessionManager;
-
 import Bank._AccountDisp;
-import Ice.Current;
-import Ice.LocalObjectHolder;
-import Ice.Object;
-import Ice.ServantLocator;
-import Ice.UserException;
 import Users.InvalidSession;
+import Users.SessionException;
 
-public class PerSessionLocator implements ServantLocator {
-    
-    private SessionManager<Session> sessions;
-    private AccountManager accounts;
-    
-    //private Map<String, String> config;
+public class PerSessionLocator extends AbstractLocator {
     
     private Lock lock = new ReentrantLock();
     private Map<String, _AccountDisp> servantMap = 
@@ -31,9 +21,7 @@ public class PerSessionLocator implements ServantLocator {
 
     public PerSessionLocator(SessionManager<Session> sessions, 
             AccountManager accounts, Map<String, String> config) {
-        this.sessions = sessions;
-        this.accounts = accounts;
-        //this.config = config;
+        super(sessions, accounts, config);
         sessions.addSessionListener(new SessionListener<Session>() {
             @Override
             public void sessionRemoved(Session session, RemovalReason reason) {
@@ -50,11 +38,9 @@ public class PerSessionLocator implements ServantLocator {
     }
 
     @Override
-    public Object locate(Current curr, LocalObjectHolder cookie)
-            throws UserException {
+    protected _AccountDisp getServant(String sid) throws SessionException {
         lock.lock();
         try {
-            String sid = curr.id.name;
             _AccountDisp acc = servantMap.get(sid);
             if (acc == null) {
                 Session session = sessions.getSessionById(sid);
@@ -65,6 +51,7 @@ public class PerSessionLocator implements ServantLocator {
                     System.out.printf("Servant created (user=%s, sid=%s)\n",
                             user, sid);
                 } else {
+                    System.out.println("Sdfsdfdfd");
                     throw new InvalidSession();
                 }
             }
@@ -72,17 +59,6 @@ public class PerSessionLocator implements ServantLocator {
         } finally {
             lock.unlock();
         }
-    }
-
-    @Override
-    public void finished(Current curr, Object servant, java.lang.Object cookie)
-            throws UserException {
-        // empty
-    }
-
-    @Override
-    public void deactivate(String category) {
-        System.out.println("\nLocator deactivated");
     }
 
 }

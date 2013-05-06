@@ -1,6 +1,8 @@
 package rozprochy.lab4.bank.client;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
 import java.util.Timer;
@@ -29,6 +31,7 @@ public class Client extends Ice.Application {
 
     private SystemManagerPrx bank;
     private volatile String sessionId;
+    private String login;
     
     private String prefix;
     private String bankEndpoint;
@@ -100,12 +103,18 @@ public class Client extends Ice.Application {
     }
     
     private AccountPrx getAccount() {
-        if (sessionId != null) {
-            ObjectPrx proxy = makePrx(sessionId);
-            return AccountPrxHelper.checkedCast(proxy);
+        if (login != null) {
+            ObjectPrx proxy = makePrx(login);
+            return AccountPrxHelper.uncheckedCast(proxy);
         } else {
             return null;
         }
+    }
+    
+    private Map<String, String> makeCtx() {
+        Map<String, String> ctx = new HashMap<String, String>();
+        ctx.put("sid", sessionId);
+        return ctx;
     }
     
     private void invalidateSession() {
@@ -163,9 +172,10 @@ public class Client extends Ice.Application {
         cli.registerHandler("login", new IceCommand() {
             @Override public boolean doExecute(String cmd, Scanner input) {
                 try {
-                    String pesel = input.next();
+                    login = input.next();
                     String password = input.next();
-                    sessionId = bank.login(pesel, password);
+                    AccountPrx account = getAccount();
+                    sessionId = account.login(password);
                     System.out.println("Logged in, sid=" + sessionId);
                 } catch (NoSuchElementException e) {
                     System.err.println("Usage: login <pesel> <password>");
@@ -186,7 +196,8 @@ public class Client extends Ice.Application {
             @Override public boolean doExecute(String cmd, Scanner input) {
                 if (checkLogged()) {
                     try {
-                        bank.logout(sessionId);
+                        AccountPrx account = getAccount();
+                        account.logout(makeCtx());
                         sessionId = null;
                         System.out.println("Logged out");
                     } catch (SessionException e) {
@@ -203,7 +214,7 @@ public class Client extends Ice.Application {
                 if (checkLogged()) {
                     try {
                         AccountPrx account = getAccount();
-                        int balance = account.getBalance();
+                        int balance = account.getBalance(makeCtx());
                         System.out.printf("Account : %10d.00 $\n", balance);
                     } catch (SessionException e) {
                         System.err.println("Invalid session"); 
@@ -224,7 +235,7 @@ public class Client extends Ice.Application {
                     try {
                         int amount = input.nextInt();
                         AccountPrx account = getAccount();
-                        account.deposit(amount);
+                        account.deposit(amount, makeCtx());
                     } catch (NumberFormatException e) {
                         System.err.println("Usage: deposit <amount>");
                     } catch (NoSuchElementException e) {
@@ -248,7 +259,7 @@ public class Client extends Ice.Application {
                     try {
                         int amount = input.nextInt();
                         AccountPrx account = getAccount();
-                        account.withdraw(amount);
+                        account.withdraw(amount, makeCtx());
                     } catch (NumberFormatException e) {
                         System.err.println("Usage: withdraw <amount>");
                     } catch (NoSuchElementException e) {
@@ -286,7 +297,7 @@ public class Client extends Ice.Application {
                             while (-- remaining != 0) {
                                 // Deliberately almost-infinite when count <= 0
                                 TimeUnit.MILLISECONDS.sleep(delay);
-                                account.getBalance();
+                                account.getBalance(makeCtx());
                                 long now = System.currentTimeMillis();
                                 if (now - begin > 100) {
                                     begin = now;
@@ -344,7 +355,8 @@ public class Client extends Ice.Application {
         timer.cancel();
         if (sessionId != null) {
             try {
-                bank.logout(sessionId);
+                AccountPrx account = getAccount();
+                account.logout(makeCtx());
             } catch (SessionException e) {
                 System.err.println("Invalid session"); 
             }
