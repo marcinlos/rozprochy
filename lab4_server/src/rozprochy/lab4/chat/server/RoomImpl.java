@@ -204,6 +204,10 @@ public class RoomImpl extends _RoomDisp {
                 System.out.println(prefix + "User " + user + " has " + 
                         "socket timeout problems, arranging for retry");
                 arrangeRetry();
+            } catch (Ice.CloseConnectionException e) {
+                System.out.println(prefix + "User " + user + " has " + 
+                        "terminated connection, arranging for retry");
+                arrangeRetry();
             }
         }
         

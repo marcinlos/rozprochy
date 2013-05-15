@@ -12,9 +12,9 @@ NAME=${1}
 SIGNER=${basedir}/../lab4_cert_signer/signer.sh
 
 PKIDIR=${basedir}/pki
-STORE=${PKIDIR}/bank/${NAME}.jks
-CSR=${PKIDIR}/bank/${NAME}.csr
-CRT=${PKIDIR}/bank/${NAME}.crt
+STORE=${PKIDIR}/${NAME}.jks
+CSR=${PKIDIR}/${NAME}.csr
+CRT=${PKIDIR}/${NAME}.crt
 CA=${PKIDIR}/sr2013ca.crt
 ALIAS=key
 PW=ala123
