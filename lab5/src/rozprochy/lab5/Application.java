@@ -90,11 +90,14 @@ public class Application {
                     Map<String, Set<String>> ch = client.getMembership();
                     if (!ch.containsKey(channel)) {
                         System.err.println("Room does not exist!");
+                        return false;
                     }
                     Set<String> joined = client.getChannels();
                     if (! joined.contains(channel)) {
                         System.err.println("Join the channel first");
+                        return false;
                     }
+                    defaultChannel = channel;
                 } catch (NoSuchElementException e) {
                     System.err.println("Usage: /set <channel>");
                 }
@@ -107,6 +110,11 @@ public class Application {
                 if (defaultChannel == null) {
                     System.err.println("Channel not set!");
                 } else {
+                    String msg = cmd;
+                    if (input.hasNextLine()) {
+                        msg += input.nextLine();
+                    }
+                    client.sendMessage(defaultChannel, msg);
                 }
                 return true;
             }

@@ -11,7 +11,10 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import javax.management.RuntimeErrorException;
+
 import org.jgroups.Address;
+import org.jgroups.Channel;
 import org.jgroups.JChannel;
 import org.jgroups.Message;
 import org.jgroups.Receiver;
@@ -153,8 +156,8 @@ public class Client {
             byte[] data = message.getBuffer();
             try {
                 ChatMessage msg = ChatMessage.parseFrom(data);
-                System.out.println(msg.getMessage());
-                System.out.printf("[%s] %s\n", channel, message.getSrc());
+                System.out.printf("\r[%s] %s: %s\n", channel, message.getSrc(), 
+                        msg.getMessage());
             } catch (InvalidProtocolBufferException e) {
                 System.err.println("\r[Invalid message]");
             }
@@ -191,6 +194,23 @@ public class Client {
         channel.close();
         channels.remove(name);
         removeEntry(name, nick, membership);
+    }
+    
+    public synchronized void sendMessage(String channel, String content) {
+        ChatMessage msg = ChatMessage.newBuilder()
+                .setMessage(content)
+                .build();
+        byte[] data = msg.toByteArray();
+        Channel ch = channels.get(channel);
+        if (ch == null) {
+            System.err.println("No such channel: " + channel);
+        }
+        try {
+            ch.send(new Message(null, data));
+        } catch (Exception e) {
+            System.err.println("Error while sending message");
+            throw new RuntimeException(e);
+        }
     }
     
     private void sendJoinMessage(String channel) {
